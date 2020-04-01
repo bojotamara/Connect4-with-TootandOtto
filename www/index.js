@@ -1,3 +1,3 @@
 import * as wasm from "connect4-with-tootand-otto";
 
-wasm.greet();
+wasm.run_app();

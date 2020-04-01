@@ -1,4 +1,5 @@
 mod utils;
+mod app;
 
 use wasm_bindgen::prelude::*;
 
@@ -14,6 +15,8 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, connect4-with-tootand-otto!");
+pub fn run_app() -> Result<(), JsValue> {
+    yew::start_app::<app::App>();
+
+    Ok(())
 }
