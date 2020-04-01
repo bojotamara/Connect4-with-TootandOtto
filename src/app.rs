@@ -1,8 +1,9 @@
-use crate::components::sidebar::Sidebar;
+use crate::components::{sidebar::Sidebar, content::Content, content::Tab};
 use yew::prelude::*;
 
 pub struct App {
-    link: ComponentLink<Self>
+    link: ComponentLink<Self>,
+    current_tab: Tab
 }
 
 // Message represents a variety of messages that can be processed by the component 
@@ -10,12 +11,16 @@ pub struct App {
 // an API request or toggles the appearance of a UI component.
 pub enum Msg {}
 
+
 impl Component for App {
     type Message = Msg;
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        App {link}
+        App {
+            current_tab: Tab::Home,
+            link: link
+        }
     }
 
     // Update life cycle method is called for each asynchronous message
@@ -27,7 +32,10 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <Sidebar/> 
+            <>
+                <Sidebar/>
+                <Content: tab=self.current_tab.clone()/>
+            </>
         }
     }
 }
