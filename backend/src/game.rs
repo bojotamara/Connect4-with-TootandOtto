@@ -1,9 +1,8 @@
 use crate::models::Game;
 
 use chrono::Utc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
-use bson::{doc, bson};
+use bson::doc;
 use rocket::response::content;
 use rocket_contrib::json;
 
@@ -24,7 +23,7 @@ pub fn insert_game_test(game: json::Json<Game>) -> String {
                 let serialized_game = bson::to_bson(&game.0).unwrap();
 
                 if let bson::Bson::Document(document) = serialized_game {
-                    collection.insert_one(document, None);  // Insert into a MongoDB collection
+                    let _result = collection.insert_one(document, None);  // Insert into a MongoDB collection
                 } else {
                     String::from("Error converting the BSON object into a MongoDB document");
                 }
@@ -58,7 +57,7 @@ pub fn list_games() -> content::Json<String> {
                         Ok(document) => {
                             games_string_vec.push(bson::Bson::Document(document).to_string());
                         },
-                        Err(e) => (),
+                        Err(_e) => (),
                     }
                 }
 
@@ -93,7 +92,7 @@ pub fn insert_default_test() -> String {
                 let serialized_game = bson::to_bson(&default_game).unwrap();
 
                 if let bson::Bson::Document(document) = serialized_game {
-                    collection.insert_one(document, None);  // Insert into a MongoDB collection
+                    let _result = collection.insert_one(document, None);  // Insert into a MongoDB collection
                 } else {
                     String::from("Error converting the BSON object into a MongoDB document");
                 }
