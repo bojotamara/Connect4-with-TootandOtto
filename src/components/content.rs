@@ -57,6 +57,11 @@ impl Component for Content {
         true
     }
 
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        self.props = props;
+        true // This will always re-render when new props are provided.
+    }
+
     fn view(&self) -> Html {
        
         html! {
