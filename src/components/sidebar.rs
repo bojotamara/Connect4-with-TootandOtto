@@ -1,27 +1,44 @@
 use yew::prelude::*;
+use super::content::Tab;
 
 pub struct Sidebar {
-    link: ComponentLink<Self>
+    link: ComponentLink<Self>,
+    onsignal: Callback<Tab>
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct Props {
+    pub onsignal: Callback<Tab>,
 }
 
 // Message represents a variety of messages that can be processed by the component 
 // to trigger some side effect. For example, you may have a Click message which triggers
 // an API request or toggles the appearance of a UI component.
-pub enum Msg {}
+pub enum Msg {
+    TabClicked(Tab)
+}
 
 impl Component for Sidebar {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Sidebar {link}
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        Sidebar {
+            link: link,
+            onsignal: props.onsignal
+        }
     }
 
     // Update life cycle method is called for each asynchronous message
     // Messages can be triggered by HTML elements listeners or be sent by child components,
     // Agents, Services, or Futures.
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        true
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::TabClicked(tab) => {
+                self.onsignal.emit(tab)
+            }
+        }
+        false
     }
 
     fn view(&self) -> Html {
@@ -30,16 +47,47 @@ impl Component for Sidebar {
                 <div class="w3-container">
                     <h3 class="w3-padding-64"><b>{"Play Connect4 / TOOT-OTTO"}</b></h3>
                 </div>
-                <a href="#/HowToConnect4" class="w3-bar-item w3-button w3-hover-white">{"How to Play Connect4"}</a>
-                <a href="#/Connect4Computer" class="w3-bar-item w3-button w3-hover-white">{"Play Connect4 With Computer"}</a> 
-                <a href="#/Connect4Human" class="w3-bar-item w3-button w3-hover-white">{"Play Connect4 with Another Human"}</a>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::HowToConnect4))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"How to Play Connect4"}
+                </button>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::Connect4Computer))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"Play Connect4 With Computer"}
+                </button> 
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::Connect4Human))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"Play Connect4 with Another Human"}
+                </button>
                 <h5 class="w3-bar-item"></h5>
-                <a href="#/HowToToot" class="w3-bar-item w3-button w3-hover-white">{"How to Play TOOT-OTTO"}</a>
-                <a href="#/TootOttoComputer" class="w3-bar-item w3-button w3-hover-white">{"Play Toot-Otto With Computer"}</a>
-                <a href="#/TootOttoHuman" class="w3-bar-item w3-button w3-hover-white">{"Play Toot-Otto With Another Human"}</a>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::HowToToot))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"How to Play TOOT-OTTO"}
+                </button>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::TootOttoComputer))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"Play Toot-Otto With Computer"}
+                </button>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::TootOttoHuman))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"Play Toot-Otto With Another Human"}
+                </button>
                 <h5 class="w3-bar-item"></h5>
-                <a href="#/ScoreBoard" class="w3-bar-item w3-button w3-hover-white">{"View Game History"}</a>
-                <a href="#/Scores" class="w3-bar-item w3-button w3-hover-white">{"Score Board"}</a>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::ScoreBoard))
+                    class="w3-bar-item w3-button w3-hover-white">
+                    {"View Game History"}
+                </button>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::Scores))
+                    class="w3-bar-item w3-button w3-hover-white">{"Score Board"}
+                </button>
             </nav>
         }
     }
