@@ -1,4 +1,7 @@
 use yew::prelude::*;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use std::f64;
 
 // TODO: import this instead of copying/pasting, waiting for henry to merge models folder
 pub struct Game {
@@ -13,7 +16,8 @@ pub struct Game {
 pub struct Connect4Computer {
     link: ComponentLink<Self>,
     game: Game,
-    game_started: bool
+    game_started: bool,
+    context: Option<web_sys::CanvasRenderingContext2d>
 }
 
 // Message represents a variety of messages that can be processed by the component 
@@ -37,8 +41,9 @@ impl Component for Connect4Computer {
                 player1_name: "".into(),
                 player2_name: "Computer".into(),
                 winner_name: "".into(),
-                game_date: 0 //TODO: GET THE DATE IN MS
+                game_date: 0 // placeholder, when game is saved this can be set
             },
+            context: None,
             game_started: false
         }
     }
@@ -56,16 +61,35 @@ impl Component for Connect4Computer {
                     //TODO: Show an error message
                 } else {
                     self.game_started = true;
+                    self.draw_board();
                 }
             }
         }
         true
     }
+    
+
+    fn mounted(&mut self) -> ShouldRender {
+        let document = web_sys::window().unwrap().document().unwrap();
+        let canvas = document.get_element_by_id("gameboard").unwrap();
+        let canvas: web_sys::HtmlCanvasElement = canvas
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .map_err(|_| ())
+            .unwrap();
+
+        self.context = Some(canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap());
+        false
+    }
 
     fn view(&self) -> Html {
-        let game;
+        let game_details;
         if self.game_started {
-            game = html! {
+            game_details = html! {
                 <div>
                     <br></br>
                     <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
@@ -74,7 +98,7 @@ impl Component for Connect4Computer {
                 </div>
             }
         } else {
-            game = html!{}
+            game_details = html!{}
         }
         html! {
             <>
@@ -106,8 +130,31 @@ impl Component for Connect4Computer {
                     </div>
                 </div>
 
-                {game}
+                {game_details}
+
+                <canvas id="gameboard" height="480" width="640"></canvas>
+                
             </>
         }
+    }
+}
+
+impl Connect4Computer {
+    fn draw_board(&self) {
+        let context = self.context.as_ref().unwrap();
+
+        context.save();
+        context.set_fill_style(&JsValue::from_str("#00bfff"));
+        context.begin_path();
+        for y in 0..6 {
+            let y = y as f64;
+            for x in 0..7 {
+                let x = x as f64;
+                context.arc(75.0 * x + 100.0, 75.0 * y + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI).unwrap();
+                context.rect(75.0 * x + 150.0, 75.0 * y, -100.0, 100.0);
+            }
+        }
+        context.fill();
+        context.restore();
     }
 }
