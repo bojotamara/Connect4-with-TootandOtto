@@ -1,4 +1,5 @@
 use yew::prelude::*;
+use super::game_history::GameHistory;
 use super::connect4::computer::Connect4Computer;
 
 #[derive(Clone, PartialEq)]
@@ -33,7 +34,7 @@ fn get_tab_html(tab: &Tab) -> Html {
         Tab::HowToToot => html!{ {"5"} },
         Tab::TootOttoComputer => html!{ {"6"} },
         Tab::TootOttoHuman => html!{ {"7"} },
-        Tab::ScoreBoard => html!{ {"8"} },
+        Tab::ScoreBoard => html!{<GameHistory />},
         Tab::Scores => html!{ {"9"} }
     }
 }
@@ -65,7 +66,7 @@ impl Component for Content {
 
     fn view(&self) -> Html {
         html! {
-            <div class="w3-main" style="margin-left:25%;padding:20px">
+            <div class="w3-main" style="margin-left:28%;margin-right:5%;position:fixed;height:100%;overflow:auto;">
                 {get_tab_html(&self.props.tab)}
             </div>
         }
