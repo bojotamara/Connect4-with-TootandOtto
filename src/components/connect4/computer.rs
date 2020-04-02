@@ -3,15 +3,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use std::f64;
 
-// TODO: import this instead of copying/pasting, waiting for henry to merge models folder
-pub struct Game {
-    pub game_number: i32,
-    pub game_type: String,
-    pub player1_name: String,
-    pub player2_name: String,
-    pub winner_name: String,
-    pub game_date: i64
-}
+extern crate models;
+use models::game::Game;
 
 pub struct Connect4Computer {
     link: ComponentLink<Self>,
