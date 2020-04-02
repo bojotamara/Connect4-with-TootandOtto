@@ -1,6 +1,7 @@
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 use std::f64;
 
 extern crate models;
@@ -10,7 +11,7 @@ pub struct Connect4Computer {
     link: ComponentLink<Self>,
     game: Game,
     game_started: bool,
-    context: Option<web_sys::CanvasRenderingContext2d>
+    context: Option<CanvasRenderingContext2d>
 }
 
 // Message represents a variety of messages that can be processed by the component 
@@ -37,8 +38,8 @@ impl Component for Connect4Computer {
                 winner_name: "".into(),
                 game_date: 0 // placeholder, when game is saved this can be set
             },
-            context: None,
-            game_started: false
+            game_started: false,
+            context: None
         }
     }
 
@@ -58,8 +59,13 @@ impl Component for Connect4Computer {
                     self.draw_board();
                 }
             },
-            Msg::ClickedBoard(value) => {
-
+            Msg::ClickedBoard(event) => {
+                if self.game_started {
+                    return false;
+                }
+                let rect = self.canvas().get_bounding_client_rect();
+                let x = event.client_x() as f64 - rect.left();
+                let y = event.client_y() as f64 - rect.top();
             }
         }
         true
@@ -69,8 +75,8 @@ impl Component for Connect4Computer {
     fn mounted(&mut self) -> ShouldRender {
         let document = web_sys::window().unwrap().document().unwrap();
         let canvas = document.get_element_by_id("gameboard").unwrap();
-        let canvas: web_sys::HtmlCanvasElement = canvas
-            .dyn_into::<web_sys::HtmlCanvasElement>()
+        let canvas: HtmlCanvasElement = canvas
+            .dyn_into::<HtmlCanvasElement>()
             .map_err(|_| ())
             .unwrap();
 
@@ -78,8 +84,9 @@ impl Component for Connect4Computer {
             .get_context("2d")
             .unwrap()
             .unwrap()
-            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .dyn_into::<CanvasRenderingContext2d>()
             .unwrap());
+
         false
     }
 
@@ -143,7 +150,7 @@ impl Component for Connect4Computer {
 
 impl Connect4Computer {
     fn draw_board(&self) {
-        let context = self.context.as_ref().unwrap();
+        let context = self.context();
 
         context.save();
         context.set_fill_style(&JsValue::from_str("#00bfff"));
@@ -158,5 +165,13 @@ impl Connect4Computer {
         }
         context.fill();
         context.restore();
+    }
+
+    fn context(&self) -> &CanvasRenderingContext2d {
+        self.context.as_ref().unwrap()
+    }
+
+    fn canvas(&self) -> HtmlCanvasElement {
+        self.context.as_ref().unwrap().canvas().unwrap()
     }
 }
