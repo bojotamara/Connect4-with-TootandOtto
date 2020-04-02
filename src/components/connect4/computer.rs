@@ -18,7 +18,8 @@ pub struct Connect4Computer {
 // an API request or toggles the appearance of a UI component.
 pub enum Msg {
     GotInput(String),
-    ClickedStart
+    ClickedStart,
+    ClickedBoard(MouseEvent),
 }
 
 impl Component for Connect4Computer {
@@ -56,6 +57,9 @@ impl Component for Connect4Computer {
                     self.game_started = true;
                     self.draw_board();
                 }
+            },
+            Msg::ClickedBoard(value) => {
+
             }
         }
         true
@@ -125,7 +129,12 @@ impl Component for Connect4Computer {
 
                 {game_details}
 
-                <canvas id="gameboard" height="480" width="640"></canvas>
+                <canvas
+                    onclick=self.link.callback(|e| Msg::ClickedBoard(e))
+                    id="gameboard"
+                    height="480"
+                    width="640">
+                </canvas>
                 
             </>
         }
