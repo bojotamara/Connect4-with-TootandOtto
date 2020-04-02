@@ -2,8 +2,8 @@ use yew::prelude::*;
 
 pub struct Connect4Computer {
     link: ComponentLink<Self>,
-    playerName: String,
-    gameStarted: bool
+    player_name: String,
+    game_started: bool
 }
 
 // Message represents a variety of messages that can be processed by the component 
@@ -19,7 +19,7 @@ impl Component for Connect4Computer {
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Connect4Computer {link, playerName: "".into(), gameStarted: false}
+        Connect4Computer {link, player_name: "".into(), game_started: false}
     }
 
     // Update life cycle method is called for each asynchronous message
@@ -28,10 +28,14 @@ impl Component for Connect4Computer {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::GotInput(new_value) => {
-                self.playerName = new_value;
+                self.player_name = new_value;
             }
             Msg::ClickedStart => {
-                self.gameStarted = true;
+                if self.player_name.is_empty() {
+                    //show an error message
+                } else {
+                    self.game_started = true;
+                }
             }
         }
         true
@@ -46,20 +50,23 @@ impl Component for Connect4Computer {
                 </div>
                 <div class="col-md-offset-4 col-md-8">
                     <div class="col-md-offset-3 col-md-8">
-                        <input 
-                            id="nameInput" 
-                            type="text" 
-                            disabled=self.gameStarted
-                            value=&self.playerName
-                            oninput=self.link.callback(|e: InputData| Msg::GotInput(e.value))
-                            placeholder="Your Name"/>
-                        <input
-                            id="startButton"
-                            disabled=self.gameStarted
-                            class="w3-button w3-border"
-                            type="button"
-                            value="Start Game"
-                            onclick=self.link.callback(|_| Msg::ClickedStart)/>
+                        <form
+                            onsubmit=self.link.callback(|_| Msg::ClickedStart)
+                            action="javascript:void(0);">
+                            <input 
+                                id="nameInput" 
+                                type="text" 
+                                disabled=self.game_started
+                                value=&self.player_name
+                                oninput=self.link.callback(|e: InputData| Msg::GotInput(e.value))
+                                placeholder="Your Name"/>
+                            <input
+                                id="startButton"
+                                disabled=self.game_started
+                                class="w3-button w3-border"
+                                type="submit"
+                                value="Start Game"/>
+                        </form>
                     </div>
                 </div>
             </div>
