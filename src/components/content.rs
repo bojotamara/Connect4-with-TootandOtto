@@ -1,5 +1,6 @@
 use yew::prelude::*;
 use super::game_history::GameHistory;
+use super::connect4::computer::Connect4Computer;
 
 #[derive(Clone, PartialEq)]
 pub enum Tab {
@@ -28,7 +29,7 @@ fn get_tab_html(tab: &Tab) -> Html {
     match tab {
         Tab::Home => html!{ {"You are home!"} },
         Tab::HowToConnect4 => html!{ {"2"} },
-        Tab::Connect4Computer => html!{ {"3"} },
+        Tab::Connect4Computer => html!{ <Connect4Computer/> },
         Tab::Connect4Human => html!{ {"4"} },
         Tab::HowToToot => html!{ {"5"} },
         Tab::TootOttoComputer => html!{ {"6"} },
@@ -65,7 +66,11 @@ impl Component for Content {
 
     fn view(&self) -> Html {
         html! {
+<<<<<<< HEAD
             <div class="w3-main" style="margin-left:28%;margin-right:5%;position:fixed;height:100%;overflow:auto;">
+=======
+            <div class="w3-main" style="margin-left:25%;padding:20px">
+>>>>>>> a60f385ab24692b39d37446a4a8d11b153bd0802
                 {get_tab_html(&self.props.tab)}
             </div>
         }
