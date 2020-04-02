@@ -39,10 +39,29 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <>
+            <body>
+                // hackerman styling
+                <style>{"
+                    body,h1,h2,h3,h4,h5 {font-family: Poppins, sans-serif}
+                    body {font-size:16px;}
+                    .w3-half img{margin-bottom:-6px;margin-top:16px;opacity:0.8;cursor:pointer}
+                    .w3-half img:hover{opacity:1}
+                    
+                    table, th , td  {
+                        border: 1px solid grey;
+                        border-collapse: collapse;
+                        padding: 5px;
+                    }
+                    table tr:nth-child(odd) {
+                        background-color: #f1f1f1;
+                    }
+                    table tr:nth-child(even) {
+                        background-color: #ffffff;
+                    }
+                "}</style>
                 <Sidebar: onsignal=self.link.callback(|tab| Msg::SwitchTab(tab))/>
                 <Content: tab=self.current_tab.clone()/>
-            </>
+            </body>
         }
     }
 }

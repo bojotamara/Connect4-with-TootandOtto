@@ -11,6 +11,8 @@ mongodb = "0.9.0"
 bson = "0.14.0"
 chrono = "0.4.11"
 serde = "1.0.105"
+models = { path = "../models", version = "0.1.0" }
+rocket_cors = "0.5.2"
 
 [dependencies.rocket]
 version = "0.4.4"

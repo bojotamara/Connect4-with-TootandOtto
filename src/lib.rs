@@ -2,6 +2,7 @@
 mod utils;
 mod app;
 mod components;
+extern crate models;
 
 use wasm_bindgen::prelude::*;
 

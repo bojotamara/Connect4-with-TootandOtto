@@ -1,6 +1,19 @@
 use serde::{Serialize, Deserialize};
+// use bson::oid::ObjectId;
 
-#[derive(Serialize, Deserialize, Debug)]
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct BsonGame {
+//     #[serde(rename = "_id")]
+//     pub id: ObjectId,
+//     pub game_number: i32,
+//     pub game_type: String,
+//     pub player1_name: String,
+//     pub player2_name: String,
+//     pub winner_name: String,
+//     pub game_date: i64
+// }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Game {
     pub game_number: i32,
     pub game_type: String,
@@ -8,6 +21,13 @@ pub struct Game {
     pub player2_name: String,
     pub winner_name: String,
     pub game_date: i64
+}
+
+impl Game {
+    pub fn to_json_string(&self) -> String {
+        format!(r#"{{"game_number": {}, "game_type": "{}", "player1_name": "{}", "player2_name": "{}", "winner_name": "{}", "game_date": {} }}"#,
+                self.game_number, self.game_type, self.player1_name, self.player2_name, self.winner_name, self.game_date)
+    }
 }
 
 // impl Game {
