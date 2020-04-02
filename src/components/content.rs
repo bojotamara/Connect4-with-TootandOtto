@@ -1,4 +1,5 @@
 use yew::prelude::*;
+use super::connect4::computer::Connect4Computer;
 
 #[derive(Clone, PartialEq)]
 pub enum Tab {
@@ -27,7 +28,7 @@ fn get_tab_html(tab: &Tab) -> Html {
     match tab {
         Tab::Home => html!{ {"You are home!"} },
         Tab::HowToConnect4 => html!{ {"2"} },
-        Tab::Connect4Computer => html!{ {"3"} },
+        Tab::Connect4Computer => html!{ <Connect4Computer/> },
         Tab::Connect4Human => html!{ {"4"} },
         Tab::HowToToot => html!{ {"5"} },
         Tab::TootOttoComputer => html!{ {"6"} },
@@ -64,7 +65,7 @@ impl Component for Content {
 
     fn view(&self) -> Html {
         html! {
-            <div class="w3-main" style="margin-left:25%">
+            <div class="w3-main" style="margin-left:25%;padding:20px">
                 {get_tab_html(&self.props.tab)}
             </div>
         }
