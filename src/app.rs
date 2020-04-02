@@ -39,7 +39,7 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <body ng-app="Connect4App">
+            <body>
                 // hackerman styling
                 <style>{"
                     body,h1,h2,h3,h4,h5 {font-family: Poppins, sans-serif}
