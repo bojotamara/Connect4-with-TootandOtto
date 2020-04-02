@@ -1,8 +1,6 @@
-use crate::models::Game;
-
-use chrono::Utc;
-
 use bson::doc;
+use chrono::Utc;
+use models::game::Game;
 use rocket::response::content;
 use rocket_contrib::json;
 

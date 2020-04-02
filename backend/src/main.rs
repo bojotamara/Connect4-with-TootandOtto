@@ -3,9 +3,9 @@
 
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate bson;
+extern crate models;
 use mongodb::{Client};
 
-mod models;
 mod game;
 
 static mut MC: Option<Client> = None;
