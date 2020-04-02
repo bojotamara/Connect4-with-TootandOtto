@@ -10,12 +10,50 @@
 #### MacOS with Homebrew
 1. Open the Terminal app and type
 
-`$ brew update.`
+    ```
+    $ brew update.
+    ```
 
 2. After updating Homebrew
 
-`$ install mongodb`
+    ```
+    $ install mongodb
+    ```
 
 3. Start the Mongo server by typing:
 
-`$ mongod`
+    ```
+    $ mongod
+    ```
+
+### Step 2: Build and run the project
+
+1. To build the project, open the terminal and run:
+
+    ```
+    wasm-pack build
+    ```
+
+2. cd into the `www` folder and run:
+
+    ```
+    npm install
+    ```
+
+3. Once it has finished installing the dependencies, run:
+
+    ```
+    npm start
+    ```
+
+4. Visit http://localhost:8080
+
+### Step 3: Starting the backend
+
+1. Run the backend on Rust's nightly distribution:
+
+    ```
+    cargo +nightly run
+    ```
+
+2. The base backend routes can be found at http://localhost:8000
