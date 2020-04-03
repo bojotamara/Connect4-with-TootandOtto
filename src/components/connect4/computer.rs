@@ -14,6 +14,8 @@ pub struct Connect4Computer {
     context: Option<CanvasRenderingContext2d>,
     board: GameBoard,
     moveNum: u8,
+    won: bool,
+    paused: bool,
 }
 
 pub struct GameBoard {
@@ -61,6 +63,8 @@ impl Component for Connect4Computer {
                 tokens: [[0; 7]; 6],
             },
             moveNum: 0,
+            won: false,
+            paused: false,
         }
     }
 
@@ -92,7 +96,10 @@ impl Component for Connect4Computer {
                 for i in 0..7 {
                     if self.on_region([x,y], (75 * i + 100) as f64, 25.0){
                         log!("Region {} clicked", i);
-                        self.action(i as f64);
+                        let valid = self.action(i as f64);
+                        if valid == 1 {
+                            //Reject Click
+                        }
                     }
                     
                 }
@@ -248,12 +255,15 @@ impl Connect4Computer {
         return false;
     }
 
-    fn animate(&self, column: f64, moveM: u8, row: f64, cur_pos: f64){
+    // fn animate(&self, column: f64, moveM: u8, row: f64, cur_pos: f64){
 
-    }
+    // }
 
 
-    fn action(&mut self, column: f64){
+    fn action(&mut self, column: f64) -> i8{
+        if self.paused || self.won {
+            return 0;
+        }
 
         let mut row = 0;
         let mut done = false;
@@ -270,10 +280,90 @@ impl Connect4Computer {
         if !done {
             row = 5;
         }
-        self.draw();
         log!("Adding token to row {}", row);
+        self.board.tokens[row as usize][column as usize] = self.playerToken();
+        self.draw();
+        self.check();
+        // self.animate(column, self.moveNum, row as f64, 0.0);
+        
+        // Set pause to true to do AI move
+        // self.paused = true;
+        return 1;
+    }
 
-        self.animate(column, self.moveNum, row as f64, 0.0);
+    fn check (&self){
+        let mut temp_r = 0;
+        let mut temp_b = 0;
+        let mut temp_br = 0;
+        let mut temp_tr = 0;
+
+        for i in 0..6 {
+            for j in 0..7 {
+                temp_r = 0;
+                temp_b = 0;
+                temp_br = 0;
+                temp_tr = 0;
+                for k in 0..=3 {
+                    //from (i,j) to right
+                    if j + k < 7 {
+                        temp_r += self.board.tokens[i][j + k];
+                    }
+                    //from (i,j) to bottom
+                    if i + k < 6 {
+                        temp_b += self.board.tokens[i + k][j];
+                    }
+
+                    //from (i,j) to bottom-right
+                    if i + k < 6 && j + k < 7 {
+                        temp_br += self.board.tokens[i + k][j + k];
+                    }
+
+                    //from (i,j) to top-right
+                    if (i - k) as i8 >= 0 && j + k < 7 {
+                        temp_tr += self.board.tokens[i - k][j + k];
+                    }
+                }
+                if temp_r.abs() == 4 {
+                    self.win(temp_r);
+                } 
+                else if temp_b.abs() == 4 {
+                    self.win(temp_b);
+                } 
+                else if temp_br.abs() == 4 {
+                    self.win(temp_br);
+                } 
+                else if temp_tr.abs() == 4 {
+                    self.win(temp_tr);
+                }
+
+            }
+        }
+        // check if draw
+        if self.moveNum == 42 && !self.won {
+            self.win(0);
+        }
+    }
+
+    fn win (&self, player: i8){
+        if player > 0 {
+            log!("Player wins");
+        }
+        else if player < 0{
+            log!("Computer wins");
+        }
+        else{
+            log!("Draw");
+        }
+
+    }
+
+
+    fn playerToken (&self) -> i8{
+        if self.moveNum %2 == 0 {
+            return 1;
+        }else{
+            return -1;
+        }
     }
 
     fn context(&self) -> &CanvasRenderingContext2d {
