@@ -13,8 +13,7 @@ use serde::{Serialize, Deserialize};
 //     pub game_date: i64
 // }
 
-// #[derive(Debug, Eq, Ord, PartialEq
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Game {
     pub game_number: i32,
     pub game_type: String,
