@@ -2,11 +2,17 @@ use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
-use crate::models::game_board::GameBoard;
+// use crate::models::game_board::GameBoard;
 use std::f64;
 
 extern crate models;
 use models::game::Game;
+
+pub struct GameBoard {
+    rows: u8,
+    columns: u8,
+    tokens: [[i8; 7];6]
+}
 
 pub struct Connect4Human {
     link: ComponentLink<Self>,
@@ -29,7 +35,8 @@ macro_rules! log {
 // to trigger some side effect. For example, you may have a Click message which triggers
 // an API request or toggles the appearance of a UI component.
 pub enum Msg {
-    GotInput(String),
+    GotPlayer1Input(String),
+    GotPlayer2Input(String),
     ClickedStart,
     ClickedBoard(MouseEvent),
 }
@@ -67,11 +74,15 @@ impl Component for Connect4Human {
     // Agents, Services, or Futures.
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::GotInput(new_value) => {
+            Msg::GotPlayer1Input(new_value) => {
                 self.game.player1_name = new_value;
-            }
+            },
+            Msg::GotPlayer2Input(new_value) => {
+                self.game.player2_name = new_value;
+            },
             Msg::ClickedStart => {
-                if self.game.player1_name.is_empty() {
+                if self.game.player1_name.is_empty()
+                    || self.game.player2_name.is_empty() {
                     //TODO: Show an error message
                 } else {
                     self.game_started = true;
@@ -120,7 +131,7 @@ impl Component for Connect4Human {
 
     fn mounted(&mut self) -> ShouldRender {
         let document = web_sys::window().unwrap().document().unwrap();
-        let canvas = document.get_element_by_id("gameboard").unwrap();
+        let canvas = document.get_element_by_id("connect4-human-gameboard").unwrap();
         let canvas: HtmlCanvasElement = canvas
             .dyn_into::<HtmlCanvasElement>()
             .map_err(|_| ())
@@ -154,7 +165,7 @@ impl Component for Connect4Human {
             <>
                 <div>
                     <div class="w3-container">
-                        <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
+                        <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     </div>
                     <div class="col-md-offset-4 col-md-8">
@@ -163,12 +174,19 @@ impl Component for Connect4Human {
                                 onsubmit=self.link.callback(|_| Msg::ClickedStart)
                                 action="javascript:void(0);">
                                 <input
-                                    id="nameInput"
+                                    id="nameInput1"
                                     type="text"
                                     disabled=self.game_started
                                     value=&self.game.player1_name
-                                    oninput=self.link.callback(|e: InputData| Msg::GotInput(e.value))
-                                    placeholder="Your Name"/>
+                                    oninput=self.link.callback(|e: InputData| Msg::GotPlayer1Input(e.value))
+                                    placeholder="Player 1's Name"/>
+                                <input
+                                    id="nameInput2"
+                                    type="text"
+                                    disabled=self.game_started
+                                    value=&self.game.player2_name
+                                    oninput=self.link.callback(|e: InputData| Msg::GotPlayer2Input(e.value))
+                                    placeholder="Player 2's Name"/>
                                 <input
                                     id="startButton"
                                     disabled=self.game_started
@@ -184,7 +202,7 @@ impl Component for Connect4Human {
 
                 <canvas
                     onclick=self.link.callback(|e| Msg::ClickedBoard(e))
-                    id="gameboard"
+                    id="connect4-human-gameboard"
                     height="480"
                     width="640">
                 </canvas>
