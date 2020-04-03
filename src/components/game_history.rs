@@ -65,7 +65,7 @@ impl Component for GameHistory {
 
     fn view(&self) -> Html {
         html! {
-            <div class="w3-container" id="services" style="margin-top:75px">
+            <div class="w3-container" id="services" style="margin-top:75px;margin-bottom:75px;">
                 <h5 class="w3-xxxlarge w3-text-red"><b>{"Game History"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round" />
                 
