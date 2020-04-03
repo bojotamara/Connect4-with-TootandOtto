@@ -43,7 +43,8 @@ features = [
   'HtmlCanvasElement',
   'Window',
   'DomRect',
-  'MouseEvent'
+  'MouseEvent',
+  "console",
 ]
 
 [profile.release]

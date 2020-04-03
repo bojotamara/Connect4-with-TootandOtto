@@ -11,7 +11,22 @@ pub struct Connect4Computer {
     link: ComponentLink<Self>,
     game: Game,
     game_started: bool,
-    context: Option<CanvasRenderingContext2d>
+    context: Option<CanvasRenderingContext2d>,
+    board: GameBoard,
+    moveNum: u8,
+}
+
+pub struct GameBoard {
+    rows: u8,
+    columns: u8,
+    tokens: [[i8; 7];6]
+}
+
+
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
 }
 
 // Message represents a variety of messages that can be processed by the component 
@@ -39,7 +54,13 @@ impl Component for Connect4Computer {
                 game_date: 0 // placeholder, when game is saved this can be set
             },
             game_started: false,
-            context: None
+            context: None,
+            board: GameBoard {
+                rows: 6,
+                columns: 7,
+                tokens: [[0; 7]; 6],
+            },
+            moveNum: 0,
         }
     }
 
@@ -60,12 +81,36 @@ impl Component for Connect4Computer {
                 }
             },
             Msg::ClickedBoard(event) => {
-                if self.game_started {
+                if !self.game_started {
                     return false;
                 }
                 let rect = self.canvas().get_bounding_client_rect();
                 let x = event.client_x() as f64 - rect.left();
                 let y = event.client_y() as f64 - rect.top();
+                log!("x: {} y: {}", x,y);
+
+                for i in 0..7 {
+                    if self.on_region([x,y], (75 * i + 100) as f64, 25.0){
+                        log!("Region {} clicked", i);
+                        self.action(i as f64);
+                    }
+                    
+                }
+
+                // for (j = 0; j < 7; j++) {
+                //     if (this.onregion([x, y], 75 * j + 100, 25)) {
+                //         // console.log("clicked region " + j);
+                //         this.paused = false;
+                        
+                //         valid = this.action(j, function () {
+                //             that.ai(-1);
+                //         }); 
+                //         if (valid === 1) { // give user retry if action is invalid
+                //             this.rejectClick = true;
+                //         }
+                //         break; //because there will be no 2 points that are clicked at a time
+                //     }
+                // }
             }
         }
         true
@@ -165,6 +210,70 @@ impl Connect4Computer {
         }
         context.fill();
         context.restore();
+    }
+
+    fn draw(&self){
+        let mut fg_color = "transparent";
+        for y in 0..6 {
+            for x in 0..7 {
+                fg_color = "transparent";
+                if self.board.tokens[y][x] >= 1 {
+                    fg_color = "#ff4136";
+                } else if self.board.tokens[y][x] <= -1_i8 {
+                    fg_color = "#ffff00";
+                }
+                self.drawCircle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string());
+            }
+        }
+    }
+
+    fn drawCircle(&self, x: f64,y: f64, r: f64, fill: String, stroke: String){
+        log!("drawing circle");
+        let context = self.context();
+
+        context.save();
+        context.set_fill_style(&JsValue::from_str(&fill));
+        context.set_stroke_style(&JsValue::from_str(&stroke));
+        context.begin_path();
+        context.arc(x, y, r, 0.0, 2.0 * f64::consts::PI).unwrap();
+        //this.context.stroke();
+        context.fill();
+        context.restore();
+    }
+
+    fn on_region(&self, coord: [f64;2], x: f64, radius: f64) -> bool{
+        if (coord[0] - x as f64)*(coord[0] - x as f64) <=  radius * radius {
+            return true;
+        }
+        return false;
+    }
+
+    fn animate(&self, column: f64, moveM: u8, row: f64, cur_pos: f64){
+
+    }
+
+
+    fn action(&mut self, column: f64){
+
+        let mut row = 0;
+        let mut done = false;
+        for i in 0..5 {
+            match self.board.tokens[i + 1][column as usize] {
+                0 => continue,
+                _=> {
+                    done = true;
+                    row = i;
+                    break;
+                }
+            }
+        }
+        if !done {
+            row = 5;
+        }
+        self.draw();
+        log!("Adding token to row {}", row);
+
+        self.animate(column, self.moveNum, row as f64, 0.0);
     }
 
     fn context(&self) -> &CanvasRenderingContext2d {
