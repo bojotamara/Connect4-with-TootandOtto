@@ -1,5 +1,6 @@
 use yew::prelude::*;
 use super::game_history::GameHistory;
+use super::score_board::ScoreBoard;
 use super::connect4::computer::Connect4Computer;
 
 #[derive(Clone, PartialEq)]
@@ -35,7 +36,7 @@ fn get_tab_html(tab: &Tab) -> Html {
         Tab::TootOttoComputer => html!{ {"6"} },
         Tab::TootOttoHuman => html!{ {"7"} },
         Tab::ScoreBoard => html!{<GameHistory />},
-        Tab::Scores => html!{ {"9"} }
+        Tab::Scores => html!{<ScoreBoard />}
     }
 }
 

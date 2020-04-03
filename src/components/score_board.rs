@@ -1,12 +1,11 @@
 use yew::prelude::*;
 use yew::services::fetch::{Request, Response, FetchService, FetchTask};
 use yew::format::{Nothing, Json};
-// use yew::services::console::ConsoleService;
 use anyhow::Error;
 use crate::models::game::Game;
 use super::utils::table_builder;
 
-pub struct GameHistory {
+pub struct ScoreBoard {
     games: Vec<Game>,
     link: ComponentLink<Self>,
     get_games_task: Result<FetchTask, Error>, // Important to keep in scope!!
@@ -20,7 +19,7 @@ pub enum Msg {
     FetchResourceFailed
 }
 
-impl Component for GameHistory {
+impl Component for ScoreBoard {
     type Message = Msg;
     type Properties = Props;
 
@@ -44,7 +43,7 @@ impl Component for GameHistory {
             }),
         );
 
-        GameHistory {
+        ScoreBoard {
             games: Vec::<Game>::new(),
             link: link,
             get_games_task: task // Note: Reference to task needs to be stored for the duration of the request (https://github.com/yewstack/yew/issues/388)
@@ -66,20 +65,45 @@ impl Component for GameHistory {
     fn view(&self) -> Html {
         html! {
             <div class="w3-container" id="services" style="margin-top:75px">
-                <h5 class="w3-xxxlarge w3-text-red"><b>{"Game History"}</b></h5>
+                <h5 class="w3-xxxlarge w3-text-red"><b>{"Score Board"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round" />
-                
+                <div><h4>{"Games Won by Computer"}</h4></div>
+                <table>
+                        <tr>
+                            <th>{"Total Games Played"}</th>
+                            <th>{"Games Against Computer"}</th>
+                            <th>{"Games Computer Won"}</th>
+                        </tr>
+                        { table_builder::render_computer_wins_table(&self.games) }
+                </table>
+
+                <br></br>
+
+                <div><h4>{"Details of Games Won by Computer"}</h4></div>
                 <div id="game-stream">
                     <table>
                         <tr>
-                            <th>{"Game-ID"}</th>
+                            <th>{"Sl. No."}</th>
                             <th>{"Game Type"}</th>
-                            <th>{"Player1"}</th>
-                            <th>{"Player2"}</th>
                             <th>{"Winner"}</th>
+                            <th>{"Played Against"}</th>
                             <th>{"When Played"}</th>
                         </tr>
-                        { table_builder::render_gh_table(&self.games) }
+                        { table_builder::render_cw_table(&self.games) }
+                    </table>
+                </div>
+
+                <br></br>
+
+                <div><h4>{"Details of Games Won by All Players"}</h4></div>
+                <div id="game-stream">
+                    <table>
+                        <tr>
+                            <th>{"Sl. No."}</th>
+                            <th>{"Winner or Draw"}</th>
+                            <th>{"No. of Wins"}</th>
+                        </tr>
+                        { table_builder::render_gw_table(&self.games) }
                     </table>
                 </div>
             </div>
