@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use super::game_history::GameHistory;
 use super::score_board::ScoreBoard;
-use super::connect4::computer::Connect4Computer;
+use super::connect4::computer::{Connect4Computer, Connect4Human};
 
 #[derive(Clone, PartialEq)]
 pub enum Tab {
