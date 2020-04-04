@@ -98,10 +98,9 @@ impl Component for Connect4Human {
                     return false;
                 }
                 if self.won {
-                    // init()
-                    // TODO: Start new game/reset board
-                    // Reload the page?? location.reload??
-                    return false;
+                    log!("Resetting board");
+                    self.reset();
+                    return true; // Reload Html
                 }
                 let rect = self.canvas().get_bounding_client_rect();
                 let x = event.client_x() as f64 - rect.left();
@@ -287,7 +286,9 @@ impl Connect4Human {
         return false;
     }
 
-    fn clear(context: &CanvasRenderingContext2d, canvas: HtmlCanvasElement) {
+    fn clear(&self) {
+        let context = self.context();
+        let canvas = self.canvas();
         context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
     }
 
@@ -478,6 +479,23 @@ impl Connect4Human {
 
         // Store reference to task
         self.save_task = Some(task);
+    }
+
+    fn reset(&mut self) {
+        self.clear();
+        self.game = Game {
+            game_number: 0, // placeholder, when game is saved this can be set
+            game_type: "Connect4".into(),
+            player1_name: "".into(),
+            player2_name: "".into(),
+            winner_name: "".into(),
+            game_date: 0 // placeholder, when game is saved this can be set
+        };
+        self.game_started = false;
+        self.board.tokens = [[0; 7]; 6];
+        self.move_num = 0;
+        self.won = false;
+        self.paused = false;
     }
 
     fn context(&self) -> &CanvasRenderingContext2d {
