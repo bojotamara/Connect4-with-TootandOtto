@@ -2,17 +2,16 @@ use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
-// use crate::models::game_board::GameBoard;
+use yew::services::fetch::{Request, Response, FetchService, FetchTask};
+use yew::format::Json;
+use anyhow::Error;
+use serde_json::json;
+use js_sys::Date;
+use crate::models::game_board::GameBoard;
 use std::f64;
 
 extern crate models;
 use models::game::Game;
-
-pub struct GameBoard {
-    rows: u8,
-    columns: u8,
-    tokens: [[i8; 7];6]
-}
 
 pub struct Connect4Human {
     link: ComponentLink<Self>,
@@ -23,6 +22,7 @@ pub struct Connect4Human {
     move_num: u8,
     won: bool,
     paused: bool,
+    save_task: Option<Result<FetchTask, Error>>
 }
 
 macro_rules! log {
@@ -39,6 +39,8 @@ pub enum Msg {
     GotPlayer2Input(String),
     ClickedStart,
     ClickedBoard(MouseEvent),
+    GameSaved,
+    SaveError
 }
 
 impl Component for Connect4Human {
@@ -66,6 +68,7 @@ impl Component for Connect4Human {
             move_num: 0,
             won: false,
             paused: false,
+            save_task: None
         }
     }
 
@@ -87,24 +90,32 @@ impl Component for Connect4Human {
                 } else {
                     self.game_started = true;
                     self.draw_board();
+                    self.print();
                 }
             },
             Msg::ClickedBoard(event) => {
                 if !self.game_started {
                     return false;
                 }
+                if self.won {
+                    // init()
+                    // TODO: Start new game/reset board
+                    return false;
+                }
                 let rect = self.canvas().get_bounding_client_rect();
                 let x = event.client_x() as f64 - rect.left();
                 let y = event.client_y() as f64 - rect.top();
-                log!("x: {} y: {}", x,y);
+                // log!("x: {} y: {}", x,y);
 
                 for i in 0..7 {
-                    if self.on_region([x,y], (75 * i + 100) as f64, 25.0){
-                        log!("Region {} clicked", i);
+                    if self.on_region([x, y], (75 * i + 100) as f64, 25.0){
+                        // log!("Region {} clicked", i);
+                        self.paused = false;
                         let valid = self.action(i as f64);
                         if valid == 1 {
                             //Reject Click
                         }
+                        break; //because there will be no 2 points that are clicked at a time
                     }
                     
                 }
@@ -123,7 +134,12 @@ impl Component for Connect4Human {
                 //         break; //because there will be no 2 points that are clicked at a time
                 //     }
                 // }
-            }
+            },
+            Msg::GameSaved => {
+                log!("Successfully saved");
+                self.save_task = None;
+            },
+            Msg::SaveError => log!("Game failed to save"),
         }
         true
     }
@@ -247,7 +263,6 @@ impl Connect4Human {
     }
 
     fn draw_circle(&self, x: f64,y: f64, r: f64, fill: String, stroke: String){
-        log!("drawing circle");
         let context = self.context();
 
         context.save();
@@ -279,8 +294,8 @@ impl Connect4Human {
         context.restore();
     }
 
-    fn on_region(&self, coord: [f64;2], x: f64, radius: f64) -> bool{
-        if (coord[0] - x as f64)*(coord[0] - x as f64) <=  radius * radius {
+    fn on_region(&self, coord: [f64; 2], x: f64, radius: f64) -> bool {
+        if (coord[0] - x as f64) * (coord[0] - x as f64) <=  radius * radius {
             return true;
         }
         return false;
@@ -317,6 +332,9 @@ impl Connect4Human {
         if self.paused || self.won {
             return 0;
         }
+        if self.board.tokens[0][column as usize] != 0 || column < 0.0 || column > 6.0 {
+            return -1;
+        }
 
         let mut row = 0;
         let mut done = false;
@@ -333,23 +351,20 @@ impl Connect4Human {
         if !done {
             row = 5;
         }
-        log!("Adding token to row {}", row);
+        // log!("Adding token to row {}", row);
         self.board.tokens[row as usize][column as usize] = self.player_token();
+        self.move_num += 1;
         self.draw();
         self.check();
+        self.print();
         // self.animate(column, row as u8);
         
-        // Set pause to true to do AI move
-        // self.paused = true;
+        self.paused = true;
         return 1;
     }
 
-    fn check (&self){
-        let mut temp_r = 0;
-        let mut temp_b = 0;
-        let mut temp_br = 0;
-        let mut temp_tr = 0;
-
+    fn check (&mut self) {
+        let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (0, 0, 0, 0);
         for i in 0..6 {
             for j in 0..7 {
                 temp_r = 0;
@@ -397,26 +412,87 @@ impl Connect4Human {
         }
     }
 
-    fn win(&self, player: i8) {
+    fn win(&mut self, player: i8) {
+        self.paused = true;
+        self.won = true;
+        self.game.game_date = Date::new_0().get_time() as i64; // Set date using js_sys::Date (chrono does not seem to work)
+        let mut msg = "".to_string();
         if player > 0 {
-            log!("Player wins");
+            msg.push_str(format!("{} wins", self.game.player1_name).as_str());
+            self.game.winner_name = self.game.player1_name.clone();
         }
-        else if player < 0{
-            log!("Computer wins");
+        else if player < 0 {
+            msg.push_str(format!("{} wins", self.game.player2_name).as_str());
+            self.game.winner_name = self.game.player2_name.clone();
         }
         else{
-            log!("Draw");
+            msg.push_str("It's a draw");
+            self.game.winner_name = "Draw".to_string();
         }
+        msg.push_str(" - Click on game board to reset");
+        let context = self.context();
+        context.save();
+        context.set_font("14pt sans-serif");
+        context.set_fill_style(&JsValue::from_str("#111"));
+        context.fill_text(&msg, 150.0, 20.0);
 
+        // Save game using API
+        self.save_game();
+
+        // TODO: Enable button again?
+
+        log!("{}", msg);
     }
 
     // Returns i if it is the player's token, else -1 (for computer)
     fn player_token (&self) -> i8 {
         if self.move_num %2 == 0 {
             return 1;
-        }else{
+        } else {
             return -1;
         }
+    }
+
+    // Print board and move number
+    fn print(&self) {
+        let mut msg = "".to_string();
+        msg.push_str("\n");
+        msg.push_str(format!("Move: {}", self.move_num).as_str());
+        msg.push_str("\n");
+        for i in 0..6 {
+            for j in 0..7 {
+                msg.push_str(format!(" {}", self.board.tokens[i][j]).as_str());
+            }
+            msg.push_str("\n");
+        }
+        log!("{}", msg);
+    }
+
+    fn save_game(&mut self) {
+        // Create JSON representation of game to save
+        let json_game = json!{self.game};
+
+        // Create POST request to save game
+        let post_request = Request::post("http://localhost:8000/insert-game-test")
+            .header("Content-Type", "application/json")
+            // .body(Json(&testing)) 
+            .body(Json(&json_game))
+            .expect("Failed to build request.");
+
+        // Create save task
+        let task = FetchService::new().fetch(
+            post_request,
+            self.link.callback(|response: Response<Result<String, Error>>| {
+                log!("In callback function");
+                if response.status().is_success() {
+                    Msg::GameSaved
+                } else {
+                    Msg::SaveError
+                }
+            }),
+        );
+
+        self.save_task = Some(task);
     }
 
     fn context(&self) -> &CanvasRenderingContext2d {
