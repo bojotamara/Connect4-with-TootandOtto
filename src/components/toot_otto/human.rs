@@ -7,7 +7,7 @@ use yew::format::{Json, Nothing};
 use anyhow::Error;
 use serde_json::json;
 use js_sys::Date;
-use crate::models::game_board::GameBoard;
+use crate::models::game_boards::TootOttoGameBoard;
 use std::f64;
 
 extern crate models;
@@ -16,9 +16,10 @@ use models::game::Game;
 pub struct TootOttoHuman {
     link: ComponentLink<Self>,
     game: Game,
+    selected_disc: char,
     game_started: bool,
     context: Option<CanvasRenderingContext2d>,
-    board: GameBoard,
+    board: TootOttoGameBoard,
     move_num: u8,
     won: bool,
     paused: bool,
@@ -38,6 +39,8 @@ pub enum Msg {
     GotPlayer1Input(String),
     GotPlayer2Input(String),
     ClickedStart,
+    DiscTSelected,
+    DiscOSelected,
     ClickedBoard(MouseEvent),
     GetGamesList(Vec<Game>),
     GameSaved,
@@ -53,18 +56,20 @@ impl Component for TootOttoHuman {
             link,
             game: Game {
                 game_number: 0, // placeholder, when game is saved this can be set
-                game_type: "Connect4".into(),
+                game_type: "TOOT-OTTO".into(),
                 player1_name: "".into(),
                 player2_name: "".into(),
                 winner_name: "".into(),
                 game_date: 0 // placeholder, when game is saved this can be set
             },
+            selected_disc: 'T',
             game_started: false,
             context: None,
-            board: GameBoard {
+            board: TootOttoGameBoard {
                 rows: 6,
                 columns: 7,
                 tokens: [[0; 7]; 6],
+                disc_map: [['0'; 7]; 6]
             },
             move_num: 0,
             won: false,
@@ -93,6 +98,12 @@ impl Component for TootOttoHuman {
                     self.draw_board();
                     self.print();
                 }
+            },
+            Msg::DiscTSelected => {
+                self.selected_disc = 'T';
+            },
+            Msg::DiscOSelected => {
+                self.selected_disc = 'O';
             },
             Msg::ClickedBoard(event) => {
                 if !self.game_started {
@@ -139,7 +150,7 @@ impl Component for TootOttoHuman {
 
     fn mounted(&mut self) -> ShouldRender {
         let document = web_sys::window().unwrap().document().unwrap();
-        let canvas = document.get_element_by_id("connect4-human-gameboard").unwrap();
+        let canvas = document.get_element_by_id("toot-otto-human-gameboard").unwrap();
         let canvas: HtmlCanvasElement = canvas
             .dyn_into::<HtmlCanvasElement>()
             .map_err(|_| ())
@@ -166,8 +177,20 @@ impl Component for TootOttoHuman {
                     <br></br>
                     <form>
                         <h4>{"Select a Disc Type: "}
-                            <input type="radio" name="choice" value="T" checked=true ng-model="newGame.Label" />{" T "}
-                            <input type="radio" name="choice" value="O" ng-model="newGame.Label" />{" O "}
+                            <input
+                                id="discT"
+                                type="radio"
+                                name="choice"
+                                value="T"
+                                checked=(self.selected_disc == 'T')
+                                onclick=self.link.callback(|_| Msg::DiscTSelected) />{" T "}
+                            <input
+                                id="discO"
+                                type="radio"
+                                name="choice"
+                                value="O"
+                                checked=(self.selected_disc == 'O')
+                                onclick=self.link.callback(|_| Msg::DiscOSelected) />{" O "}
                         </h4>
                     </form>
                 </div>
@@ -216,7 +239,7 @@ impl Component for TootOttoHuman {
 
                 <canvas
                     onclick=self.link.callback(|e| Msg::ClickedBoard(e))
-                    id="connect4-human-gameboard"
+                    id="toot-otto-human-gameboard"
                     height="480"
                     width="640">
                 </canvas>
@@ -249,18 +272,28 @@ impl TootOttoHuman {
         let mut fg_color = "transparent";
         for y in 0..6 {
             for x in 0..7 {
+                let mut text = ' ';
                 fg_color = "transparent";
-                if self.board.tokens[y][x] >= 1 {
-                    fg_color = "#ff4136";
-                } else if self.board.tokens[y][x] <= -1_i8 {
-                    fg_color = "#ffff00";
+                if self.board.tokens[y][x] >= 1 && self.board.disc_map[y][x] == 'T' {
+                    fg_color = "#99ffcc";
+                    text = 'T';
+                } else if self.board.tokens[y][x] >= 1 && self.board.disc_map[y][x] == 'O' {
+                    fg_color = "#99ffcc";
+                    text = 'O';
+                } else if self.board.tokens[y][x] <= -1_i8 && self.board.disc_map[y][x] == 'T' {
+                    fg_color = "#ffff99";
+                    text = 'T';
+                } else if self.board.tokens[y][x] <= -1_i8 && self.board.disc_map[y][x] == 'O' {
+                    fg_color = "#ffff99";
+                    text = 'O';
                 }
-                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string());
+
+                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string(), text.to_string());
             }
         }
     }
 
-    fn draw_circle(&self, x: f64,y: f64, r: f64, fill: String, stroke: String){
+    fn draw_circle(&self, x: f64, y: f64, r: f64, fill: String, stroke: String, text: String) {
         let context = self.context();
 
         context.save();
@@ -268,9 +301,11 @@ impl TootOttoHuman {
         context.set_stroke_style(&JsValue::from_str(&stroke));
         context.begin_path();
         context.arc(x, y, r, 0.0, 2.0 * f64::consts::PI).unwrap();
-        //this.context.stroke();
         context.fill();
+        // TODO: set font family??
+        context.set_font("bold 25px serif");
         context.restore();
+        context.fill_text(&text.as_str(), x - 8.5, y + 8.0);
     }
 
     fn draw_mask(&self) {
@@ -353,6 +388,7 @@ impl TootOttoHuman {
         }
         // log!("Adding token to row {}", row);
         self.board.tokens[row as usize][column as usize] = self.player_token();
+        self.board.disc_map[row as usize][column as usize] = self.selected_disc;
         self.move_num += 1;
         self.draw();
         self.check();
@@ -364,44 +400,57 @@ impl TootOttoHuman {
     }
 
     fn check (&mut self) {
-        let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (0, 0, 0, 0);
+        let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (['0'; 4], ['0'; 4], ['0'; 4], ['0'; 4]);
         for i in 0..6 {
             for j in 0..7 {
-                temp_r = 0;
-                temp_b = 0;
-                temp_br = 0;
-                temp_tr = 0;
+                temp_r = ['0'; 4];
+                temp_b = ['0'; 4];
+                temp_br = ['0'; 4];
+                temp_tr = ['0'; 4];
                 for k in 0..=3 {
                     //from (i,j) to right
                     if j + k < 7 {
-                        temp_r += self.board.tokens[i][j + k];
+                        temp_r[k] = self.board.disc_map[i][j + k];
                     }
                     //from (i,j) to bottom
                     if i + k < 6 {
-                        temp_b += self.board.tokens[i + k][j];
+                        temp_b[k] = self.board.disc_map[i + k][j];
                     }
 
                     //from (i,j) to bottom-right
                     if i + k < 6 && j + k < 7 {
-                        temp_br += self.board.tokens[i + k][j + k];
+                        temp_br[k] = self.board.disc_map[i + k][j + k];
                     }
 
                     //from (i,j) to top-right
                     if (i - k) as i8 >= 0 && j + k < 7 {
-                        temp_tr += self.board.tokens[i - k][j + k];
+                        temp_tr[k] = self.board.disc_map[i - k][j + k];
                     }
                 }
-                if temp_r.abs() == 4 {
-                    self.win(temp_r);
-                } 
-                else if temp_b.abs() == 4 {
-                    self.win(temp_b);
-                } 
-                else if temp_br.abs() == 4 {
-                    self.win(temp_br);
-                } 
-                else if temp_tr.abs() == 4 {
-                    self.win(temp_tr);
+
+                if temp_r[0] == 'T' && temp_r[1] == 'O' && temp_r[2] == 'O' && temp_r[3] == 'T' {
+                    self.win(1);
+                }
+                else if temp_r[0] == 'O' && temp_r[1] == 'T' && temp_r[2] == 'T' && temp_r[3] == 'O' {
+                    self.win(-1);
+                }
+                else if temp_b[0] == 'T' && temp_b[1] == 'O' && temp_b[2] == 'O' && temp_b[3] == 'T' {
+                    self.win(1);
+                }
+                else if temp_b[0] == 'O' && temp_b[1] == 'T' && temp_b[2] == 'T' && temp_b[3] == 'O' {
+                    self.win(-1);
+                }
+                else if temp_br[0] == 'T' && temp_br[1] == 'O' && temp_br[2] == 'O' && temp_br[3] == 'T' {
+                    self.win(1);
+                }
+                else if temp_br[0] == 'O' && temp_br[1] == 'T' && temp_br[2] == 'T' && temp_br[3] == 'O' {
+                    self.win(-1);
+                }
+                else if temp_tr[0] == 'T' && temp_tr[1] == 'O' && temp_tr[2] == 'O' && temp_tr[3] == 'T' {
+                    self.win(1);
+                }
+                else if temp_tr[0] == 'O' && temp_tr[1] == 'T' && temp_tr[2] == 'T' && temp_tr[3] == 'O' {
+                    self.win(-1);
                 }
 
             }
@@ -452,19 +501,22 @@ impl TootOttoHuman {
         }
     }
 
-    // Print board and move number
+    // Print board, disc map, and move number
     fn print(&self) {
-        let mut msg = "".to_string();
+        let (mut msg, mut disc_msg) = ("".to_string(), "".to_string());
         msg.push_str("\n");
         msg.push_str(format!("Move: {}", self.move_num).as_str());
         msg.push_str("\n");
         for i in 0..6 {
             for j in 0..7 {
                 msg.push_str(format!(" {}", self.board.tokens[i][j]).as_str());
+                disc_msg.push_str(format!(" {}", self.board.disc_map[i][j]).as_str());
             }
             msg.push_str("\n");
+            disc_msg.push_str("\n");
         }
         log!("{}", msg);
+        log!("{}", disc_msg);
     }
 
     fn get_games_list(&mut self) {
@@ -477,7 +529,6 @@ impl TootOttoHuman {
         let task = FetchService::new().fetch(
             get_request,
             self.link.callback(|response: Response<Json<Result<Vec<Game>, Error>>>| {
-                log!("In response: {:?}", response);
                 if let (meta, Json(Ok(body))) = response.into_parts() {
                     if meta.status.is_success() {
                         return Msg::GetGamesList(body);
@@ -522,14 +573,16 @@ impl TootOttoHuman {
         self.clear();
         self.game = Game {
             game_number: 0, // placeholder, when game is saved this can be set
-            game_type: "Connect4".into(),
+            game_type: "TOOT-OTTO".into(),
             player1_name: "".into(),
             player2_name: "".into(),
             winner_name: "".into(),
             game_date: 0 // placeholder, when game is saved this can be set
         };
+        self.selected_disc = 'T';
         self.game_started = false;
         self.board.tokens = [[0; 7]; 6];
+        self.board.disc_map = [['0'; 7]; 6];
         self.move_num = 0;
         self.won = false;
         self.paused = false;
