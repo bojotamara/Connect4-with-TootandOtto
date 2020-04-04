@@ -1,0 +1,549 @@
+use yew::prelude::*;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
+use yew::services::fetch::{Request, Response, FetchService, FetchTask};
+use yew::format::{Json, Nothing};
+use anyhow::Error;
+use serde_json::json;
+use js_sys::Date;
+use crate::models::game_board::GameBoard;
+use std::f64;
+
+extern crate models;
+use models::game::Game;
+
+pub struct TootOttoHuman {
+    link: ComponentLink<Self>,
+    game: Game,
+    game_started: bool,
+    context: Option<CanvasRenderingContext2d>,
+    board: GameBoard,
+    move_num: u8,
+    won: bool,
+    paused: bool,
+    save_task: Option<Result<FetchTask, Error>>
+}
+
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
+// Message represents a variety of messages that can be processed by the component 
+// to trigger some side effect. For example, you may have a Click message which triggers
+// an API request or toggles the appearance of a UI component.
+pub enum Msg {
+    GotPlayer1Input(String),
+    GotPlayer2Input(String),
+    ClickedStart,
+    ClickedBoard(MouseEvent),
+    GetGamesList(Vec<Game>),
+    GameSaved,
+    SaveError
+}
+
+impl Component for TootOttoHuman {
+    type Message = Msg;
+    type Properties = ();
+
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        TootOttoHuman {
+            link,
+            game: Game {
+                game_number: 0, // placeholder, when game is saved this can be set
+                game_type: "Connect4".into(),
+                player1_name: "".into(),
+                player2_name: "".into(),
+                winner_name: "".into(),
+                game_date: 0 // placeholder, when game is saved this can be set
+            },
+            game_started: false,
+            context: None,
+            board: GameBoard {
+                rows: 6,
+                columns: 7,
+                tokens: [[0; 7]; 6],
+            },
+            move_num: 0,
+            won: false,
+            paused: false,
+            save_task: None
+        }
+    }
+
+    // Update life cycle method is called for each asynchronous message
+    // Messages can be triggered by HTML elements listeners or be sent by child components,
+    // Agents, Services, or Futures.
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::GotPlayer1Input(new_value) => {
+                self.game.player1_name = new_value;
+            },
+            Msg::GotPlayer2Input(new_value) => {
+                self.game.player2_name = new_value;
+            },
+            Msg::ClickedStart => {
+                if self.game.player1_name.is_empty()
+                    || self.game.player2_name.is_empty() {
+                    //TODO: Show an error message
+                } else {
+                    self.game_started = true;
+                    self.draw_board();
+                    self.print();
+                }
+            },
+            Msg::ClickedBoard(event) => {
+                if !self.game_started {
+                    return false;
+                }
+                if self.won {
+                    log!("Resetting board");
+                    self.reset();
+                    return true; // Reload Html
+                }
+                let rect = self.canvas().get_bounding_client_rect();
+                let x = event.client_x() as f64 - rect.left();
+                let y = event.client_y() as f64 - rect.top();
+                // log!("x: {} y: {}", x,y);
+
+                for i in 0..7 {
+                    if self.on_region([x, y], (75 * i + 100) as f64, 25.0){
+                        // log!("Region {} clicked", i);
+                        self.paused = false;
+                        let valid = self.action(i as f64);
+                        if valid == 1 {
+                            //Reject Click
+                        }
+                        break; //because there will be no 2 points that are clicked at a time
+                    }
+                    
+                }
+            },
+            Msg::GetGamesList(games) => {
+                log!("Obtained games list");
+                self.game.game_number = games.len() as i32 + 1;
+                self.save_task = None;
+                self.save_game();
+            },
+            Msg::GameSaved => {
+                log!("Successfully saved");
+                self.save_task = None;
+            },
+            Msg::SaveError => log!("Game failed to save"),
+        }
+        true
+    }
+    
+
+    fn mounted(&mut self) -> ShouldRender {
+        let document = web_sys::window().unwrap().document().unwrap();
+        let canvas = document.get_element_by_id("connect4-human-gameboard").unwrap();
+        let canvas: HtmlCanvasElement = canvas
+            .dyn_into::<HtmlCanvasElement>()
+            .map_err(|_| ())
+            .unwrap();
+
+        self.context = Some(canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<CanvasRenderingContext2d>()
+            .unwrap());
+
+        false
+    }
+
+    fn view(&self) -> Html {
+        let game_details;
+        if self.game_started {
+            game_details = html! {
+                <div>
+                    <br></br>
+                    <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
+                    <small>{"(Winning Combination: "}  {&self.game.player1_name} {" - TOOT "} {&self.game.player2_name} {" - OTTO)"}</small>
+                    <br></br>
+                    <form>
+                        <h4>{"Select a Disc Type: "}
+                            <input type="radio" name="choice" value="T" checked=true ng-model="newGame.Label" />{" T "}
+                            <input type="radio" name="choice" value="O" ng-model="newGame.Label" />{" O "}
+                        </h4>
+                    </form>
+                </div>
+            }
+        } else {
+            game_details = html!{}
+        }
+        html! {
+            <>
+                <div>
+                    <div class="w3-container">
+                        <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
+                        <hr style="width:50px;border:5px solid red" class="w3-round"/>
+                    </div>
+                    <div class="col-md-offset-4 col-md-8">
+                        <div class="col-md-offset-3 col-md-8">
+                            <form
+                                onsubmit=self.link.callback(|_| Msg::ClickedStart)
+                                action="javascript:void(0);">
+                                <input
+                                    id="nameInput1"
+                                    type="text"
+                                    disabled=self.game_started
+                                    value=&self.game.player1_name
+                                    oninput=self.link.callback(|e: InputData| Msg::GotPlayer1Input(e.value))
+                                    placeholder="Player 1's Name"/>
+                                <input
+                                    id="nameInput2"
+                                    type="text"
+                                    disabled=self.game_started
+                                    value=&self.game.player2_name
+                                    oninput=self.link.callback(|e: InputData| Msg::GotPlayer2Input(e.value))
+                                    placeholder="Player 2's Name"/>
+                                <input
+                                    id="startButton"
+                                    disabled=self.game_started
+                                    class="w3-button w3-border"
+                                    type="submit"
+                                    value="Start Game"/>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {game_details}
+
+                <canvas
+                    onclick=self.link.callback(|e| Msg::ClickedBoard(e))
+                    id="connect4-human-gameboard"
+                    height="480"
+                    width="640">
+                </canvas>
+                
+            </>
+        }
+    }
+}
+
+impl TootOttoHuman {
+    fn draw_board(&self) {
+        let context = self.context();
+
+        context.save();
+        context.set_fill_style(&JsValue::from_str("#00bfff"));
+        context.begin_path();
+        for y in 0..6 {
+            let y = y as f64;
+            for x in 0..7 {
+                let x = x as f64;
+                context.arc(75.0 * x + 100.0, 75.0 * y + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI).unwrap();
+                context.rect(75.0 * x + 150.0, 75.0 * y, -100.0, 100.0);
+            }
+        }
+        context.fill();
+        context.restore();
+    }
+
+    fn draw(&self){
+        let mut fg_color = "transparent";
+        for y in 0..6 {
+            for x in 0..7 {
+                fg_color = "transparent";
+                if self.board.tokens[y][x] >= 1 {
+                    fg_color = "#ff4136";
+                } else if self.board.tokens[y][x] <= -1_i8 {
+                    fg_color = "#ffff00";
+                }
+                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string());
+            }
+        }
+    }
+
+    fn draw_circle(&self, x: f64,y: f64, r: f64, fill: String, stroke: String){
+        let context = self.context();
+
+        context.save();
+        context.set_fill_style(&JsValue::from_str(&fill));
+        context.set_stroke_style(&JsValue::from_str(&stroke));
+        context.begin_path();
+        context.arc(x, y, r, 0.0, 2.0 * f64::consts::PI).unwrap();
+        //this.context.stroke();
+        context.fill();
+        context.restore();
+    }
+
+    fn draw_mask(&self) {
+        // draw the mask
+        // http://stackoverflow.com/questions/6271419/how-to-fill-the-opposite-shape-on-canvas
+        // -->  http://stackoverflow.com/a/11770000/917957
+
+        let context = self.context();
+        context.save();
+        context.set_fill_style(&JsValue::from_str(&"#00bfff"));
+        context.begin_path();
+        for y in 0..6 {
+            for x in 0..7 {
+                context.arc(75.0 * x as f64 + 100.0, 75.0 * y as f64 + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI);
+                context.rect(75.0 * x as f64 + 150.0, 75.0 * y as f64, -100.0, 100.0);
+            }
+        }
+        context.fill();
+        context.restore();
+    }
+
+    fn on_region(&self, coord: [f64; 2], x: f64, radius: f64) -> bool {
+        if (coord[0] - x as f64) * (coord[0] - x as f64) <=  radius * radius {
+            return true;
+        }
+        return false;
+    }
+
+    fn clear(&self) {
+        let context = self.context();
+        let canvas = self.canvas();
+        context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
+    }
+
+    // fn animate(&self, column: f64, move_num: i8, to_row: f64, cur_pos: f64, callback: js_sys::Function){
+    //     let mut fg_color = "transparent";
+    //     if move_num >= 1 {
+    //         fg_color = "#ff4136";
+    //     } else if move_num <= -1 {
+    //         fg_color = "#ffff00";
+    //     }
+    //     if to_row * 75.0 >= cur_pos {
+    //         self.clear();
+    //         self.draw();
+    //         self.draw_circle(75.0 * column + 100.0, cur_pos + 50.0, 25.0, fg_color.to_string(), "black".to_string());
+    //         self.draw_mask();
+    //         let window = self.window();
+    //         let closure = Closure::wrap(Box::new(move || {
+    //             Self::animate(self, column, move_num, to_row, cur_pos + 25.0, callback);
+    //         }) as Box<dyn Fn()>);
+    //         // = Closure::wrap(Box::new(move || self.animate(column, move_num, to_row, cur_pos + 25.0, callback) as Box<dyn Fn()>));
+    //         // window.request_animation_frame(function.as_ref().unchecked_ref());
+    //     } else {
+    //         callback.call0(&JsValue::NULL);
+    //     }
+    // }
+
+    fn action(&mut self, column: f64) -> i8{
+        if self.paused || self.won {
+            return 0;
+        }
+        if self.board.tokens[0][column as usize] != 0 || column < 0.0 || column > 6.0 {
+            return -1;
+        }
+
+        let mut row = 0;
+        let mut done = false;
+        for i in 0..5 {
+            match self.board.tokens[i + 1][column as usize] {
+                0 => continue,
+                _=> {
+                    done = true;
+                    row = i;
+                    break;
+                }
+            }
+        }
+        if !done {
+            row = 5;
+        }
+        // log!("Adding token to row {}", row);
+        self.board.tokens[row as usize][column as usize] = self.player_token();
+        self.move_num += 1;
+        self.draw();
+        self.check();
+        self.print();
+        // self.animate(column, row as u8);
+        
+        self.paused = true;
+        return 1;
+    }
+
+    fn check (&mut self) {
+        let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (0, 0, 0, 0);
+        for i in 0..6 {
+            for j in 0..7 {
+                temp_r = 0;
+                temp_b = 0;
+                temp_br = 0;
+                temp_tr = 0;
+                for k in 0..=3 {
+                    //from (i,j) to right
+                    if j + k < 7 {
+                        temp_r += self.board.tokens[i][j + k];
+                    }
+                    //from (i,j) to bottom
+                    if i + k < 6 {
+                        temp_b += self.board.tokens[i + k][j];
+                    }
+
+                    //from (i,j) to bottom-right
+                    if i + k < 6 && j + k < 7 {
+                        temp_br += self.board.tokens[i + k][j + k];
+                    }
+
+                    //from (i,j) to top-right
+                    if (i - k) as i8 >= 0 && j + k < 7 {
+                        temp_tr += self.board.tokens[i - k][j + k];
+                    }
+                }
+                if temp_r.abs() == 4 {
+                    self.win(temp_r);
+                } 
+                else if temp_b.abs() == 4 {
+                    self.win(temp_b);
+                } 
+                else if temp_br.abs() == 4 {
+                    self.win(temp_br);
+                } 
+                else if temp_tr.abs() == 4 {
+                    self.win(temp_tr);
+                }
+
+            }
+        }
+        // check if draw
+        if self.move_num == 42 && !self.won {
+            self.win(0);
+        }
+    }
+
+    fn win(&mut self, player: i8) {
+        self.paused = true;
+        self.won = true;
+        self.game.game_date = Date::new_0().get_time() as i64; // Set date using js_sys::Date (chrono does not seem to work)
+        let mut msg = "".to_string();
+        if player > 0 {
+            msg.push_str(format!("{} wins", self.game.player1_name).as_str());
+            self.game.winner_name = self.game.player1_name.clone();
+        }
+        else if player < 0 {
+            msg.push_str(format!("{} wins", self.game.player2_name).as_str());
+            self.game.winner_name = self.game.player2_name.clone();
+        }
+        else{
+            msg.push_str("It's a draw");
+            self.game.winner_name = "Draw".to_string();
+        }
+        msg.push_str(" - Click on game board to reset");
+        let context = self.context();
+        context.save();
+        context.set_font("14pt sans-serif");
+        context.set_fill_style(&JsValue::from_str("#111"));
+        context.fill_text(&msg, 150.0, 20.0);
+
+        // Print final state
+        log!("{}", msg);
+
+        // Save game using API
+        self.get_games_list();
+    }
+
+    // Returns i if it is the player's token, else -1 (for computer)
+    fn player_token (&self) -> i8 {
+        if self.move_num %2 == 0 {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+
+    // Print board and move number
+    fn print(&self) {
+        let mut msg = "".to_string();
+        msg.push_str("\n");
+        msg.push_str(format!("Move: {}", self.move_num).as_str());
+        msg.push_str("\n");
+        for i in 0..6 {
+            for j in 0..7 {
+                msg.push_str(format!(" {}", self.board.tokens[i][j]).as_str());
+            }
+            msg.push_str("\n");
+        }
+        log!("{}", msg);
+    }
+
+    fn get_games_list(&mut self) {
+        // Create GET request for list of games
+        let get_request = Request::get("http://localhost:8000/list-games")
+            .body(Nothing)
+            .unwrap();
+
+        // Create task for FetchService
+        let task = FetchService::new().fetch(
+            get_request,
+            self.link.callback(|response: Response<Json<Result<Vec<Game>, Error>>>| {
+                log!("In response: {:?}", response);
+                if let (meta, Json(Ok(body))) = response.into_parts() {
+                    if meta.status.is_success() {
+                        return Msg::GetGamesList(body);
+                    }
+                }
+                Msg::SaveError
+            }),
+        );
+
+        // Store reference to task
+        self.save_task = Some(task);
+    }
+
+    fn save_game(&mut self) {
+        // Create JSON representation of game to save
+        let json_game = json!{self.game};
+
+        // Create POST request to save game
+        let post_request = Request::post("http://localhost:8000/insert-game")
+            .header("Content-Type", "application/json")
+            .body(Json(&json_game))
+            .expect("Failed to build request.");
+
+        // Create save task
+        let task = FetchService::new().fetch(
+            post_request,
+            self.link.callback(|response: Response<Result<String, Error>>| {
+                log!("In callback function");
+                if response.status().is_success() {
+                    Msg::GameSaved
+                } else {
+                    Msg::SaveError
+                }
+            }),
+        );
+
+        // Store reference to task
+        self.save_task = Some(task);
+    }
+
+    fn reset(&mut self) {
+        self.clear();
+        self.game = Game {
+            game_number: 0, // placeholder, when game is saved this can be set
+            game_type: "Connect4".into(),
+            player1_name: "".into(),
+            player2_name: "".into(),
+            winner_name: "".into(),
+            game_date: 0 // placeholder, when game is saved this can be set
+        };
+        self.game_started = false;
+        self.board.tokens = [[0; 7]; 6];
+        self.move_num = 0;
+        self.won = false;
+        self.paused = false;
+    }
+
+    fn context(&self) -> &CanvasRenderingContext2d {
+        self.context.as_ref().unwrap()
+    }
+
+    fn canvas(&self) -> HtmlCanvasElement {
+        self.context.as_ref().unwrap().canvas().unwrap()
+    }
+
+    fn window(&self) -> Window {
+        web_sys::window().unwrap()
+    }
+}
