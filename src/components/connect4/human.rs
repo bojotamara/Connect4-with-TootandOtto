@@ -7,7 +7,7 @@ use yew::format::{Json, Nothing};
 use anyhow::Error;
 use serde_json::json;
 use js_sys::Date;
-use crate::models::game_board::GameBoard;
+use crate::models::game_boards::Connect4GameBoard;
 use std::f64;
 
 extern crate models;
@@ -18,7 +18,7 @@ pub struct Connect4Human {
     game: Game,
     game_started: bool,
     context: Option<CanvasRenderingContext2d>,
-    board: GameBoard,
+    board: Connect4GameBoard,
     move_num: u8,
     won: bool,
     paused: bool,
@@ -61,7 +61,7 @@ impl Component for Connect4Human {
             },
             game_started: false,
             context: None,
-            board: GameBoard {
+            board: Connect4GameBoard {
                 rows: 6,
                 columns: 7,
                 tokens: [[0; 7]; 6],
