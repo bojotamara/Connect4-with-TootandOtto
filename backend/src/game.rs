@@ -12,7 +12,7 @@ use super::{MC, DB_NAME, GAMES_TEST_COLLECTION};
  *  Read: https://rocket.rs/v0.4/guide/requests/#json
  */
 #[post("/insert-game", format = "application/json", data = "<game>")]
-pub fn insert_game_test(game: json::Json<Game>) -> String {
+pub fn insert_game(game: json::Json<Game>) -> String {
     unsafe {
         match MC {
             Some(ref client) => {

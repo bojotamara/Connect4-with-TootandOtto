@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 use yew::services::fetch::{Request, Response, FetchService, FetchTask};
-use yew::format::Json;
+use yew::format::{Json, Nothing};
 use anyhow::Error;
 use serde_json::json;
 use js_sys::Date;
@@ -39,6 +39,7 @@ pub enum Msg {
     GotPlayer2Input(String),
     ClickedStart,
     ClickedBoard(MouseEvent),
+    GetGamesList(Vec<Game>),
     GameSaved,
     SaveError
 }
@@ -119,6 +120,12 @@ impl Component for Connect4Human {
                     }
                     
                 }
+            },
+            Msg::GetGamesList(games) => {
+                log!("Obtained games list");
+                self.game.game_number = games.len() as i32 + 1;
+                self.save_task = None;
+                self.save_game();
             },
             Msg::GameSaved => {
                 log!("Successfully saved");
@@ -427,7 +434,7 @@ impl Connect4Human {
         log!("{}", msg);
 
         // Save game using API
-        self.save_game();
+        self.get_games_list();
     }
 
     // Returns i if it is the player's token, else -1 (for computer)
@@ -454,12 +461,36 @@ impl Connect4Human {
         log!("{}", msg);
     }
 
+    fn get_games_list(&mut self) {
+        // Create GET request for list of games
+        let get_request = Request::get("http://localhost:8000/list-games")
+            .body(Nothing)
+            .unwrap();
+
+        // Create task for FetchService
+        let task = FetchService::new().fetch(
+            get_request,
+            self.link.callback(|response: Response<Json<Result<Vec<Game>, Error>>>| {
+                log!("In response: {:?}", response);
+                if let (meta, Json(Ok(body))) = response.into_parts() {
+                    if meta.status.is_success() {
+                        return Msg::GetGamesList(body);
+                    }
+                }
+                Msg::SaveError
+            }),
+        );
+
+        // Store reference to task
+        self.save_task = Some(task);
+    }
+
     fn save_game(&mut self) {
         // Create JSON representation of game to save
         let json_game = json!{self.game};
 
         // Create POST request to save game
-        let post_request = Request::post("http://localhost:8000/insert-game-test")
+        let post_request = Request::post("http://localhost:8000/insert-game")
             .header("Content-Type", "application/json")
             .body(Json(&json_game))
             .expect("Failed to build request.");

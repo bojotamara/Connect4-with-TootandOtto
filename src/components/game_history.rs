@@ -25,7 +25,6 @@ impl Component for GameHistory {
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-
         // Create GET request for list of games
         let get_request = Request::get("http://localhost:8000/list-games")
             .body(Nothing)

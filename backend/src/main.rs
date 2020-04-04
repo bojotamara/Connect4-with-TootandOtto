@@ -47,7 +47,7 @@ fn main() -> Result<(), mongodb::error::Error> {
         .mount("/", routes![
             hello,
             hi,
-            game::insert_game_test,
+            game::insert_game,
             game::list_games,
             game::insert_default_test
         ])
