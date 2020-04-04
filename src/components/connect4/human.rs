@@ -162,7 +162,7 @@ impl Component for Connect4Human {
                 <div>
                     <br></br>
                     <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
-                    <small>{"Disc Colors: "}  {&self.game.player1_name} {" - Red "} {&self.game.player2_name} {" - Yellow "}</small>
+                    <small>{"(Disc Colors: "}  {&self.game.player1_name} {" - Red "} {&self.game.player2_name} {" - Yellow)"}</small>
                     <br></br>
                 </div>
             }
