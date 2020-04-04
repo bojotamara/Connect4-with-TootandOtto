@@ -100,6 +100,7 @@ impl Component for Connect4Human {
                 if self.won {
                     // init()
                     // TODO: Start new game/reset board
+                    // Reload the page?? location.reload??
                     return false;
                 }
                 let rect = self.canvas().get_bounding_client_rect();
@@ -119,21 +120,6 @@ impl Component for Connect4Human {
                     }
                     
                 }
-
-                // for (j = 0; j < 7; j++) {
-                //     if (this.onregion([x, y], 75 * j + 100, 25)) {
-                //         // console.log("clicked region " + j);
-                //         this.paused = false;
-                        
-                //         valid = this.action(j, function () {
-                //             that.ai(-1);
-                //         }); 
-                //         if (valid === 1) { // give user retry if action is invalid
-                //             this.rejectClick = true;
-                //         }
-                //         break; //because there will be no 2 points that are clicked at a time
-                //     }
-                // }
             },
             Msg::GameSaved => {
                 log!("Successfully saved");
@@ -436,12 +422,11 @@ impl Connect4Human {
         context.set_fill_style(&JsValue::from_str("#111"));
         context.fill_text(&msg, 150.0, 20.0);
 
+        // Print final state
+        log!("{}", msg);
+
         // Save game using API
         self.save_game();
-
-        // TODO: Enable button again?
-
-        log!("{}", msg);
     }
 
     // Returns i if it is the player's token, else -1 (for computer)
@@ -475,7 +460,6 @@ impl Connect4Human {
         // Create POST request to save game
         let post_request = Request::post("http://localhost:8000/insert-game-test")
             .header("Content-Type", "application/json")
-            // .body(Json(&testing)) 
             .body(Json(&json_game))
             .expect("Failed to build request.");
 
@@ -492,6 +476,7 @@ impl Connect4Human {
             }),
         );
 
+        // Store reference to task
         self.save_task = Some(task);
     }
 
