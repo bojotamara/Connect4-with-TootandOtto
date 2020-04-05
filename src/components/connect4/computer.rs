@@ -74,7 +74,7 @@ impl Component for Connect4Computer {
 
     fn mounted(&mut self) -> ShouldRender {
         let document = web_sys::window().unwrap().document().unwrap();
-        let canvas = document.get_element_by_id("gameboard").unwrap();
+        let canvas = document.get_element_by_id("connect4-comp-gameboard").unwrap();
         let canvas: HtmlCanvasElement = canvas
             .dyn_into::<HtmlCanvasElement>()
             .map_err(|_| ())
@@ -138,7 +138,7 @@ impl Component for Connect4Computer {
 
                 <canvas
                     onclick=self.link.callback(|e| Msg::ClickedBoard(e))
-                    id="gameboard"
+                    id="connect4-comp-gameboard"
                     height="480"
                     width="640">
                 </canvas>
