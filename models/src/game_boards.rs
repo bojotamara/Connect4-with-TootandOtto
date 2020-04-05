@@ -9,4 +9,4 @@ pub struct TootOttoGameBoard {
     pub columns: u8,
     pub tokens: [[i8; 7];6],
     pub disc_map: [[char; 7];6]
-} 
+}
