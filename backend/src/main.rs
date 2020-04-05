@@ -36,8 +36,8 @@ fn main() -> Result<(), mongodb::error::Error> {
     let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:8080"]); // Set origin to that of app
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
-        allowed_methods: vec![Method::Get].into_iter().map(From::from).collect(),
-        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
+        allowed_methods: vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
         allow_credentials: true,
         ..Default::default()
     }
@@ -47,7 +47,7 @@ fn main() -> Result<(), mongodb::error::Error> {
         .mount("/", routes![
             hello,
             hi,
-            game::insert_game_test,
+            game::insert_game,
             game::list_games,
             game::insert_default_test
         ])

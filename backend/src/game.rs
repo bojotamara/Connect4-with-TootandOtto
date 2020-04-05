@@ -11,8 +11,8 @@ use super::{MC, DB_NAME, GAMES_TEST_COLLECTION};
  *  Insert game into DB using JSON data obtained POST request body
  *  Read: https://rocket.rs/v0.4/guide/requests/#json
  */
-#[post("/insert-game-test", format = "application/json", data = "<game>")]
-pub fn insert_game_test(game: json::Json<Game>) -> String {
+#[post("/insert-game", format = "application/json", data = "<game>")]
+pub fn insert_game(game: json::Json<Game>) -> String {
     unsafe {
         match MC {
             Some(ref client) => {

@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use super::game_history::GameHistory;
 use super::score_board::ScoreBoard;
-use super::connect4::computer::Connect4Computer;
+use super::connect4::{computer::Connect4Computer, human::Connect4Human};
 
 #[derive(Clone, PartialEq)]
 pub enum Tab {
@@ -84,8 +84,8 @@ fn get_tab_html(tab: &Tab) -> Html {
     match tab {
         Tab::Home => homepage_html(),
         Tab::HowToConnect4 => how_to_connect4_html(),
-        Tab::Connect4Computer => html!{ <Connect4Computer/> },
-        Tab::Connect4Human => html!{ {"4"} },
+        Tab::Connect4Computer => html!{ <Connect4Computer /> },
+        Tab::Connect4Human => html!{ <Connect4Human /> },
         Tab::HowToToot => how_to_toot_html(),
         Tab::TootOttoComputer => html!{ {"6"} },
         Tab::TootOttoHuman => html!{ {"7"} },
