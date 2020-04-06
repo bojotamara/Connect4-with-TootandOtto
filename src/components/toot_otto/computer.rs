@@ -553,7 +553,7 @@ impl TootOttoComputer {
             let mut done = false;
             let mut row = 0;
             for i in 0..5 {
-                if (state[i + 1][column as usize] != '0') {
+                if state[i + 1][column as usize] != '0' {
                     done = true;
                     row = i;
                     break;
@@ -582,7 +582,7 @@ impl TootOttoComputer {
             let mut done = false;
             let mut row = 0;
             for i in 0..5 {
-                if (state[i + 1][column as usize] != '0') {
+                if state[i + 1][column as usize] != '0' {
                     done = true;
                     row = i;
                     break;
@@ -601,8 +601,6 @@ impl TootOttoComputer {
         }
 
         fn check_state(state: [[char; 7]; 6]) -> i8 {
-            let mut chain_val: i8 = 0;
-
             let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (['0'; 4], ['0'; 4], ['0'; 4], ['0'; 4]);
             for i in 0..6 {
                 for j in 0..7 {
