@@ -123,11 +123,9 @@ impl Component for TootOttoComputer {
                         self.paused = false;
                         let valid = self.action(i);
                         if valid == 1 {
-                            // TODO: Perform ai function here
-                            log!("AI's turn");
+                            // Perform AI action
                             self.paused = false;
                             self.ai();
-                            // Call self.ai('T') and self.ai('O') then find the max of that??
                         }
                         break; //because there will be no 2 points that are clicked at a time
                     }
@@ -602,7 +600,7 @@ impl TootOttoComputer {
             return Ok(temp_map);
         }
 
-        fn check_state(state: [[char; 7]; 6]) -> i8 /*[i8; 2]*/ {
+        fn check_state(state: [[char; 7]; 6]) -> i8 {
             let mut chain_val: i8 = 0;
 
             let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (['0'; 4], ['0'; 4], ['0'; 4], ['0'; 4]);
@@ -669,7 +667,7 @@ impl TootOttoComputer {
         fn value(state: [[char; 7]; 6], depth: i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
             let MAX_DEPTH = 4; // Less depth = easier
             let val = check_state(state);
-            // log!("Value is called! Depth: {} Value: {} State:\n{:?}", depth, val, state);
+
             // depth changes the difficulty (less depth = easier)
             if depth >= MAX_DEPTH {
                 // If it lead to winning, then do it
@@ -698,7 +696,7 @@ impl TootOttoComputer {
             let MAX_DEPTH = 4; // Less depth = easier
             let val_1 = check_state(states[0]);
             let val_2 = check_state(states[1]);
-            // log!("Value is called! Depth: {} Value: {} State:\n{:?}", depth, val, state);
+
             // depth changes the difficulty (less depth = easier)
             if depth >= MAX_DEPTH {
                 // If it lead to winning, then do it
@@ -707,8 +705,6 @@ impl TootOttoComputer {
                 } else if val_1 == -1 || val_2 == -1 { // AI lose, AI hates losing
                     return -999999 + depth * depth;
                 }
-
-                // ret_value -= depth * depth; // ???
                 return 0;
             }
             
@@ -738,7 +734,6 @@ impl TootOttoComputer {
             let mut temp_val: i64;
             let mut move_queue = Vec::<i64>::new();
             for j in 0..7 {
-                // TODO: do both states? T or O -> choice
                 match choice {
                     Some(choice) => {
                         if let Ok(temp_state) = fill_map_choice(state, j, choice) {
@@ -755,8 +750,6 @@ impl TootOttoComputer {
         
                             // alpha-beta pruning
                             if v > beta {
-                                // log!("v: {}", v);
-                                // log!("In max_state, a-b pruning, move_queue: {:?}", move_queue);
                                 move_col = choose(move_queue);
                                 return [v - depth * depth, move_col];
                             }
@@ -779,8 +772,6 @@ impl TootOttoComputer {
         
                             // alpha-beta pruning
                             if v > beta {
-                                // log!("v: {}", v);
-                                // log!("In max_state, a-b pruning, move_queue: {:?}", move_queue);
                                 move_col = choose(move_queue);
                                 return [v - depth * depth, move_col];
                             }
@@ -792,8 +783,6 @@ impl TootOttoComputer {
             }
 
             // Randomly choose from move queue
-            // log!("v: {}", v);
-            // log!("In max_state, end of loop, move_queue: {:?}", move_queue);
             move_col = choose(move_queue);
             // Return the move to make
             [v - depth * depth, move_col]
@@ -823,8 +812,6 @@ impl TootOttoComputer {
         
                             // alpha-beta pruning
                             if v < alpha {
-                                // log!("v: {}", v);
-                                // log!("In min_state, a-b pruning, move_queue: {:?}", move_queue);
                                 move_col = choose(move_queue);
                                 return [v + depth * depth, move_col];
                             }
@@ -846,8 +833,6 @@ impl TootOttoComputer {
         
                             // alpha-beta pruning
                             if v < alpha {
-                                // log!("v: {}", v);
-                                // log!("In min_state, a-b pruning, move_queue: {:?}", move_queue);
                                 move_col = choose(move_queue);
                                 return [v + depth * depth, move_col];
                             }
@@ -858,8 +843,6 @@ impl TootOttoComputer {
             }
 
             // Randomly choose from move queue
-            // log!("v: {}", v);
-            // log!("In min_state, end of loop, move_queue: {:?}", move_queue);
             move_col = choose(move_queue);
             // Return the move to make
             [v + depth * depth, move_col]
