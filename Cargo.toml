@@ -17,7 +17,6 @@ yew = { version = "0.14.2", features = ["web_sys"] }
 chrono = "0.4.11"
 anyhow = "1.0.28"
 serde_json = "1.0.50"
-rand = "0.7.3"
 models = { path = "./models", version = "0.1.0" }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by

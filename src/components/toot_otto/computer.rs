@@ -6,10 +6,10 @@ use yew::services::fetch::{Request, Response, FetchService, FetchTask};
 use yew::format::{Json, Nothing};
 use anyhow::Error;
 use serde_json::json;
-use js_sys::Date;
-use rand::Rng;
+use js_sys::{Date, Math};
 use crate::models::game_boards::TootOttoGameBoard;
 use std::f64;
+use std::cmp::max;
 
 extern crate models;
 use models::game::Game;
@@ -121,7 +121,9 @@ impl Component for TootOttoComputer {
                         self.paused = false;
                         let valid = self.action(i as f64);
                         if valid == 1 {
-                            //Reject Click
+                            // TODO: Perform ai function here 
+                            self.ai();
+                            // Call self.ai('T') and self.ai('O') then find the max of that??
                         }
                         break; //because there will be no 2 points that are clicked at a time
                     }
@@ -532,37 +534,32 @@ impl TootOttoComputer {
         self.save_task = Some(task);
     }
 
-    fn fill_map(&mut self, column: f64, value: i8) -> Result<[[i8; 7]; 6], i8> {
-        let mut temp_map = self.board.tokens.clone();
-        if temp_map[0][column as usize] != 0 || column < 0.0 || column > 6.0 {
-            return Err(-1);
-        }
-
-        let mut done = false;
-        let mut row = 0;
-        for i in 0..5 {
-            if (temp_map[i + 1][column as usize] != 0) {
-                done = true;
-                row = i;
-                break;
-            }
-        }
-
-        if !done {
-            row = 5;
-        }
-
-        temp_map[row][column as usize] = value;
-        return Ok(temp_map);
-    }
-
     fn ai(&self) {
-        let dummyLabel = ['T', 'O'];
+        let curr_state = self.board.disc_map.clone();
 
-        let mut rng = rand::thread_rng();
-        let choice: f64 = (rng.gen::<f64>() * 2.0).floor();
-
-        let curr_state = self.board.tokens.clone();
+        fn fill_map(state: [[char; 7]; 6], column: i64, value: char) -> Result<[[char; 7]; 6], i8> {
+            let mut temp_map = state.clone();
+            if temp_map[0][column as usize] != '0' || column < 0 || column > 6 {
+                return Err(-1);
+            }
+    
+            let mut done = false;
+            let mut row = 0;
+            for i in 0..5 {
+                if (temp_map[i + 1][column as usize] != '0') {
+                    done = true;
+                    row = i;
+                    break;
+                }
+            }
+    
+            if !done {
+                row = 5;
+            }
+    
+            temp_map[row][column as usize] = value;
+            return Ok(temp_map);
+        }
 
         fn check_state(state: [[char; 7]; 6]) -> i8 /*[i8; 2]*/ {
             let mut win_val: i8 = 0;
@@ -629,54 +626,184 @@ impl TootOttoComputer {
             // [win_val, chain_val]
         }
         
-        fn value(state: [[char; 7]; 6], depth: i64) -> i64 {
+        fn value(state: [[char; 7]; 6], depth: i64, choice: char, alpha: i64, beta: i64) -> i64 {
             let MAX_DEPTH = 4; // Less depth = easier
             let val = check_state(state);
+            // log!("Value is called! Depth: {} Value: {} State:\n{:?}", depth, val, state);
             // depth changes the difficulty (less depth = easier)
             if depth >= MAX_DEPTH {
                 let mut ret_value: i64 = 0;
 
                 let win_val = val;
-                ret_value = win_val.into(); // ???
+                // ret_value = win_val.into(); // ???
 
                 // If it lead to winning, then do it
                 if win_val == 1 { // AI win, AI wants to win of course
-                    ret_value = 999999;
+                    return 999999 - depth * depth; // Less value if it is later on in the game
                 } else if win_val == -1 { // AI lose, AI hates losing
-                    ret_value = -999999;
+                    return -999999 + depth * depth;
                 }
 
-                ret_value -= depth * depth; // ???
-                return ret_value;
+                // ret_value -= depth * depth; // ???
+                return win_val.into();
             }
             
             let win = val;
             // if already won, then return the value right away
             if win == 1 { // AI win, AI wants to win of course
-                return 999999 - depth * depth;
-            }
-            if win == -1 { // AI lose, AI hates losing
-                return -999999 * -1 - depth * depth;
+                // return 999999 - depth * depth;
+                return 999999;
+            } else if win == -1 { // AI lose, AI hates losing
+                // return -999999 - depth * depth;
+                return -999999;
             }
 
             if depth % 2 == 0 {
-                return min_state(state, depth /*, alpha, beta */);
+                return min_state(state, depth + 1, choice, alpha, beta)[0];
             }
-            return max_state(state, depth /*, alpha, beta */);
+            return max_state(state, depth + 1, choice, alpha, beta)[0];
         }
 
         fn choose(choice: Vec<i64>) -> i64 {
-            let mut rng = rand::thread_rng();
-            return choice[(rng.gen::<f64>() * choice.len() as f64).floor() as usize]
+            // Use js_sys::Math to find random value (rand does not seem to work)
+            return choice[(Math::random() * choice.len() as f64).floor() as usize]
         }
 
-        fn max_state(state: [[char; 7]; 6], depth: i64 /*, alpha, beta */) {
+        // Returns [value, choice (column chosen)]
+        fn max_state(state: [[char; 7]; 6], depth: i64, choice: char, alpha: i64, beta: i64) -> [i64; 3] {
+            let mut alpha = alpha;
             let mut v = -100000000007;
+            let mut move_num = -1;
+            let mut temp_val: i64;
+            let mut move_queue = Vec::<i64>::new();
+            let mut selected_disc = 0; // 0 for 'T'
+            for j in 0..7 {
+                // TODO: do both states? T or O -> choice
+                if let Ok(temp_state) = fill_map(state, j, choice) {
+                    temp_val = value(temp_state, depth, choice, alpha, beta);
+
+                    if temp_val > v {
+                        v = temp_val;
+                        move_num = j;
+                        selected_disc = 0;
+                        move_queue.clear();
+                        move_queue.push(j);
+                    } else if temp_val == v {
+                        move_queue.push(j);
+                    }
+
+                    // alpha-beta pruning
+                    if v > beta {
+                        move_num = choose(move_queue);
+                        return [v, move_num, 0];
+                    }
+                    alpha = max(alpha, v);
+
+                }
+
+                // if let Ok(temp_state) = fill_map(state, j, choice) {
+                //     temp_val = value(temp_state, depth, 'O', alpha, beta);
+
+                //     if temp_val > v {
+                //         v = temp_val;
+                //         move_num = j;
+                //         selected_disc = 1;
+                //         move_queue.clear();
+                //         move_queue.push(j);
+                //     } else if temp_val == v {
+                //         move_queue.push(j);
+                //     }
+
+                //     // alpha-beta pruning
+                //     if v > beta {
+                //         move_num = choose(move_queue);
+                //         return [v, move_num, 1];
+                //     }
+                //     alpha = max(alpha, v);
+
+                // }
+            }
+            // Randomly choose from move queue
+            move_num = choose(move_queue);
+            // Return the move to make
+            [v, move_num, selected_disc]
         }
 
-        fn min_state(state: [[char; 7]; 6], depth: i64 /*, alpha, beta */) {
+        // Returns [value, choice (column chosen)]
+        fn min_state(state: [[char; 7]; 6], depth: i64, choice: char, alpha: i64, beta: i64) -> [i64; 3] {
+            let mut alpha = alpha;
             let mut v = 100000000007;
+            let mut move_num = -1;
+            let mut temp_val: i64;
+            let mut move_queue = Vec::<i64>::new();
+            let mut selected_disc = 0; // 0 for 'T', 1 for 'O'
+            for j in 0..7 {
+                // TODO: fix choice value...? -> should be human player's choice
+                if let Ok(temp_state) = fill_map(state, j, choice) {
+                    temp_val = value(temp_state, depth, choice, alpha, beta);
+
+                    if temp_val < v {
+                        v = temp_val;
+                        move_num = j;
+                        selected_disc = 0;
+                        move_queue.clear();
+                        move_queue.push(j);
+                    } else if temp_val == v {
+                        move_queue.push(j);
+                    }
+
+                    // alpha-beta pruning
+                    if v < alpha {
+                        move_num = choose(move_queue);
+                        return [v, move_num, 0];
+                    }
+                    alpha = max(alpha, v);
+
+                }
+
+                // if let Ok(temp_state) = fill_map(state, j, choice) {
+                //     temp_val = value(temp_state, depth, 'O', alpha, beta);
+
+                //     if temp_val < v {
+                //         v = temp_val;
+                //         move_num = j;
+                //         selected_disc = 1;
+                //         move_queue.clear();
+                //         move_queue.push(j);
+                //     } else if temp_val == v {
+                //         move_queue.push(j);
+                //     }
+
+                //     // alpha-beta pruning
+                //     if v < alpha {
+                //         move_num = choose(move_queue);
+                //         return [v, move_num, 1];
+                //     }
+                //     alpha = max(alpha, v);
+
+                // }
+            }
+            // Randomly choose from move queue
+            move_num = choose(move_queue);
+            // Return the move to make
+            [v, move_num, selected_disc]
         }
+
+        // TODO: find max value between both choices and take -> if lose, then??
+        let disc_choices = ['T', 'O'];
+
+        let choice_val_T = max_state(curr_state, 0, 'T', -100000000007, 100000000007);
+        let val_T = choice_val_T[0];
+        let selected_choice_T = choice_val_T[1];
+        log!("AI Disc type: T chosen column: {} (value: {}) disc: {}", selected_choice_T, val_T, disc_choices[choice_val_T[2] as usize]);
+
+        let choice_val_O = max_state(curr_state, 0, 'O', -100000000007, 100000000007);
+        let val_O = choice_val_O[0];
+        let selected_choice_O = choice_val_O[1];
+        log!("AI Disc type: O chosen column: {} (value: {}), disc: {}", selected_choice_O, val_O, disc_choices[choice_val_O[2] as usize]);
+
+        // Make move based on information
+
     }
 
     fn save_game(&mut self) {
