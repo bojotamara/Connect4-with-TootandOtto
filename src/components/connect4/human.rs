@@ -239,7 +239,7 @@ impl Connect4Human {
         context.restore();
     }
 
-    fn draw(&self){
+    fn draw(&self) {
         let mut fg_color = "transparent";
         for y in 0..6 {
             for x in 0..7 {
@@ -254,7 +254,7 @@ impl Connect4Human {
         }
     }
 
-    fn draw_circle(&self, x: f64,y: f64, r: f64, fill: String, stroke: String){
+    fn draw_circle(&self, x: f64,y: f64, r: f64, fill: String, stroke: String) {
         let context = self.context();
 
         context.save();
@@ -357,7 +357,7 @@ impl Connect4Human {
         return 1;
     }
 
-    fn check (&mut self) {
+    fn check(&mut self) {
         let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (0, 0, 0, 0);
         for i in 0..6 {
             for j in 0..7 {
@@ -381,7 +381,7 @@ impl Connect4Human {
                     }
 
                     //from (i,j) to top-right
-                    if (i - k) as i8 >= 0 && j + k < 7 {
+                    if i - k >= 0 && j + k < 7 {
                         temp_tr += self.board.tokens[i - k][j + k];
                     }
                 }
@@ -438,7 +438,7 @@ impl Connect4Human {
     }
 
     // Returns i if it is the player's token, else -1 (for computer)
-    fn player_token (&self) -> i8 {
+    fn player_token(&self) -> i8 {
         if self.move_num %2 == 0 {
             return 1;
         } else {
