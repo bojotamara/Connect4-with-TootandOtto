@@ -518,20 +518,20 @@ impl Connect4Computer {
 
                 // If it lead to winning, then do it
                 if win_val == -4 { // AI win, AI wants to win of course
-                    ret_value = 999999 - depth * depth; // Less value if it is later on in the game
+                    ret_value = 999999; // Less value if it is later on in the game
                 } else if win_val == 4 { // AI lose, AI hates losing
-                    ret_value = -999999 + depth * depth;
+                    ret_value = -999999;
                 }
 
-                return [ret_value, -1];
+                return [ret_value - depth * depth, -1];
             }
             
             let win = val[0];
             // if already won, then return the value right away
             if win == -4 { // AI win, AI wants to win of course
-                return [999999, -1];
+                return [999999 - depth * depth, -1];
             } else if win == 4 { // AI lose, AI hates losing
-                return [-999999, -1];
+                return [-999999 - depth * depth, -1];
             }
 
             if depth % 2 == 0 {
@@ -568,7 +568,7 @@ impl Connect4Computer {
                     // alpha-beta pruning
                     if v > beta {
                         move_col = choose(move_queue);
-                        return [v - depth * depth, move_col];
+                        return [v, move_col];
                     }
                     alpha = max(alpha, v);
 
@@ -578,7 +578,7 @@ impl Connect4Computer {
             // Randomly choose from move queue
             move_col = choose(move_queue);
             // Return the move to make
-            [v - depth * depth, move_col]
+            [v, move_col]
         }
 
         // Returns [value, choice (column chosen)]
@@ -604,7 +604,7 @@ impl Connect4Computer {
                     // alpha-beta pruning
                     if v < alpha {
                         move_col = choose(move_queue);
-                        return [v + depth * depth, move_col];
+                        return [v, move_col];
                     }
                     beta = min(beta, v);
                 }
@@ -613,15 +613,18 @@ impl Connect4Computer {
             // Randomly choose from move queue
             move_col = choose(move_queue);
             // Return the move to make
-            [v + depth * depth, move_col]
+            [v, move_col]
         }
 
         // Obtain choice and take action
         let [val, choice] = max_state(curr_state, 0, -100000000007, 100000000007);
+        let [val2, choice2] = min_state(curr_state, 0, -100000000007, 100000000007);
         self.action(choice);
 
         // Print AI's move
         log!("AI -1 choose column: {} (value: {})", choice, val);
+        log!("Max state val: {}, column: {}", val, choice);
+        log!("Min state val: {}, column: {}", val2, choice2);
     }
 
     fn get_games_list(&mut self) {
