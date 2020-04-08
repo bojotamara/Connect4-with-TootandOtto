@@ -471,7 +471,6 @@ impl Connect4Human {
         let task = FetchService::new().fetch(
             get_request,
             self.link.callback(|response: Response<Json<Result<Vec<Game>, Error>>>| {
-                log!("In response: {:?}", response);
                 if let (meta, Json(Ok(body))) = response.into_parts() {
                     if meta.status.is_success() {
                         return Msg::GetGamesList(body);
