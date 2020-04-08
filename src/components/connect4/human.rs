@@ -381,7 +381,7 @@ impl Connect4Human {
                     }
 
                     //from (i,j) to top-right
-                    if i - k >= 0 && j + k < 7 {
+                    if (i - k) as i8 >= 0 && j + k < 7 {
                         temp_tr += self.board.tokens[i - k][j + k];
                     }
                 }
