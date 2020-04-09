@@ -5,7 +5,7 @@ use models::game::Game;
 use rocket::response::content;
 use rocket_contrib::json;
 
-use super::{MC, DB_NAME, GAMES_TEST_COLLECTION};
+use super::{MC, DB_NAME, GAMES_COLLECTION};
 
 /** 
  *  Insert game into DB using JSON data obtained POST request body
@@ -17,7 +17,7 @@ pub fn insert_game(game: json::Json<Game>) -> String {
         match MC {
             Some(ref client) => {
                 let db = client.database(DB_NAME);
-                let collection = db.collection(GAMES_TEST_COLLECTION);
+                let collection = db.collection(GAMES_COLLECTION);
 
                 let serialized_game = bson::to_bson(&game.0).unwrap();
 
@@ -43,7 +43,7 @@ pub fn list_games() -> content::Json<String> {
         match MC {
             Some(ref client) => {
                 let db = client.database(DB_NAME);
-                let collection = db.collection(GAMES_TEST_COLLECTION);
+                let collection = db.collection(GAMES_COLLECTION);
 
                 // Don't specify any filters to get all the games
                 let cursor = collection.find(None, None).unwrap();
@@ -81,7 +81,7 @@ pub fn insert_default_test() -> String {
         match MC {
             Some(ref client) => {
                 let db = client.database(DB_NAME);
-                let collection = db.collection(GAMES_TEST_COLLECTION);
+                let collection = db.collection(GAMES_COLLECTION);
 
                 let now = Utc::now();
                 let default_game = Game {

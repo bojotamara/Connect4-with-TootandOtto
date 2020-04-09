@@ -13,8 +13,8 @@ use mongodb::{Client};
 mod game;
 
 static mut MC: Option<Client> = None;
-static DB_NAME: &'static str = "Connect4DB";
-static GAMES_TEST_COLLECTION: &'static str = "games-test";
+static DB_NAME: &'static str = "TOOTandOTTO-Connect4-DB";
+static GAMES_COLLECTION: &'static str = "games";
 
 #[get("/hello/<name>/<age>")]
 fn hello(name: String, age: u8) -> String {
