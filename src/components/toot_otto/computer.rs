@@ -242,8 +242,8 @@ impl Component for TootOttoComputer {
         }
         html! {
             <>
-                <div>
-                    <div class="w3-container">
+                <div class="w3-container">
+                    <div>
                         <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     </div>

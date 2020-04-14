@@ -196,7 +196,7 @@ impl Component for Connect4Human {
         html! {
             <>
                 <div class="w3-container">
-                    <div class="w3-container">
+                    <div>
                         <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     </div>
