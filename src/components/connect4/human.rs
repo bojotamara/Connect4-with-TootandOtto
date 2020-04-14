@@ -183,10 +183,11 @@ impl Component for Connect4Human {
         let game_details;
         if self.game_started {
             game_details = html! {
-                <div>
-                    <br></br>
-                    <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
-                    <br></br>
+                <div class="w3-container">
+                    <div class="w3-row-padding">
+                        <hr style="width:100%;border:1px solid red" class="w3-round"/>
+                        <h4 class="w3-xlarge"><b class="w3-text-red">{"New Game: "}</b>{&self.game.player1_name} {" Vs "} {&self.game.player2_name} </h4>
+                    </div>
                 </div>
             }
         } else {

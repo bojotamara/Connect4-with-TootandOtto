@@ -206,29 +206,35 @@ impl Component for TootOttoComputer {
         let game_details;
         if self.game_started {
             game_details = html! {
-                <div>
-                    <br></br>
-                    <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
-                    <small>{"(Winning Combination: "}  {&self.game.player1_name} {" - TOOT "} {&self.game.player2_name} {" - OTTO)"}</small>
-                    <br></br>
-                    <form>
-                        <h4>{"Select a Disc Type: "}
-                            <input
-                                id="discT"
-                                type="radio"
-                                name="choice"
-                                value="T"
-                                checked=(self.selected_disc == 'T')
-                                onclick=self.link.callback(|_| Msg::DiscTSelected) />{" T "}
-                            <input
-                                id="discO"
-                                type="radio"
-                                name="choice"
-                                value="O"
-                                checked=(self.selected_disc == 'O')
-                                onclick=self.link.callback(|_| Msg::DiscOSelected) />{" O "}
-                        </h4>
+                <div class="w3-container">
+                    <div class="w3-row-padding">
+                        <hr style="width:100%;border:1px solid red" class="w3-round"/>
+                        <h4 class="w3-xlarge"><b class="w3-text-red">{"New Game: "}</b>{&self.game.player1_name} {" Vs "} {&self.game.player2_name} </h4>
+                        {"(Winning Combination: "}  <b>{&self.game.player1_name} {" - TOOT"}</b> {" ; "} <b>{&self.game.player2_name} {" - OTTO)"}</b>
+                        <br/>
+                    </div>
+                    <form class="w3-row-padding">
+                        <label>{"Select a Disc Type: "}</label>
+                        <label for="discT" style="padding:8px;">{"T"}</label>
+                        <input
+                            class="w3-radio"
+                            id="discT"
+                            type="radio"
+                            name="choice"
+                            value="T"
+                            checked=(self.selected_disc == 'T')
+                            onclick=self.link.callback(|_| Msg::DiscTSelected) />
+                        <label for="discO" style="padding:8px;">{"O"}</label>
+                        <input
+                            class="w3-radio"
+                            id="discO"
+                            type="radio"
+                            name="choice"
+                            value="O"
+                            checked=(self.selected_disc == 'O')
+                            onclick=self.link.callback(|_| Msg::DiscOSelected) />
                     </form>
+                    <br/>
                 </div>
             }
         } else {
@@ -236,7 +242,7 @@ impl Component for TootOttoComputer {
         }
         html! {
             <>
-                <div class="w3-container">
+                <div>
                     <div class="w3-container">
                         <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
