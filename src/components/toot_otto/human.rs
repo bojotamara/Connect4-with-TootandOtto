@@ -9,6 +9,7 @@ use serde_json::json;
 use js_sys::Date;
 use crate::models::game_boards::TootOttoGameBoard;
 use std::f64;
+use crate::alert;
 
 extern crate models;
 use models::game::Game;
@@ -101,12 +102,12 @@ impl Component for TootOttoHuman {
             Msg::ClickedStart => {
                 if self.game.player1_name.is_empty()
                     || self.game.player2_name.is_empty() {
-                    //TODO: Show an error message
+                    alert("Player names can't be blank!");
                 } else if self.game.player1_name == "Computer"
                     || self.game.player2_name == "Computer" {
-
+                    alert("Computer is a reserved name!");
                 } else if self.game.player1_name == self.game.player2_name {
-
+                    alert("Player names must be different!");
                 } else {
                     self.game_started = true;
                     self.draw_board();

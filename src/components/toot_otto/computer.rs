@@ -10,6 +10,7 @@ use js_sys::{Date, Math};
 use crate::models::game_boards::TootOttoGameBoard;
 use std::f64;
 use std::cmp::{max, min};
+use crate::alert;
 
 extern crate models;
 use models::game::Game;
@@ -104,9 +105,9 @@ impl Component for TootOttoComputer {
             },
             Msg::ClickedStart => {
                 if self.game.player1_name.is_empty() {
-                    //TODO: Show an error message
+                    alert("Player name can't be blank!");
                 } else if self.game.player1_name == "Computer" {
-
+                    alert("Computer is a reserved name!");
                 } else {
                     self.game_started = true;
                     self.draw_board();
