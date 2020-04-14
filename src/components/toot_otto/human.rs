@@ -102,6 +102,11 @@ impl Component for TootOttoHuman {
                 if self.game.player1_name.is_empty()
                     || self.game.player2_name.is_empty() {
                     //TODO: Show an error message
+                } else if self.game.player1_name == "Computer"
+                    || self.game.player2_name == "Computer" {
+
+                } else if self.game.player1_name == self.game.player2_name {
+
                 } else {
                     self.game_started = true;
                     self.draw_board();

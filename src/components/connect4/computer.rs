@@ -105,6 +105,8 @@ impl Component for Connect4Computer {
             Msg::ClickedStart => {
                 if self.game.player1_name.is_empty() {
                     //TODO: Show an error message
+                } else if self.game.player1_name == "Computer" {
+
                 } else {
                     self.game_started = true;
                     self.draw_board();
