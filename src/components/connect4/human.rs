@@ -22,7 +22,10 @@ pub struct Connect4Human {
     move_num: u8,
     won: bool,
     paused: bool,
-    save_task: Option<Result<FetchTask, Error>>
+    save_task: Option<Result<FetchTask, Error>>,
+    player1_color: String,
+    player2_color: String,
+    board_color: String
 }
 
 macro_rules! log {
@@ -41,7 +44,10 @@ pub enum Msg {
     ClickedBoard(MouseEvent),
     GetGamesList(Vec<Game>),
     GameSaved,
-    SaveError
+    SaveError,
+    Player1ColorChange(String),
+    Player2ColorChange(String),
+    BoardColorChange(String)
 }
 
 impl Component for Connect4Human {
@@ -69,7 +75,10 @@ impl Component for Connect4Human {
             move_num: 0,
             won: false,
             paused: false,
-            save_task: None
+            save_task: None,
+            player1_color: "#ff4136".into(),
+            player2_color: "#ffff00".into(),
+            board_color: "#00bfff".into(),
         }
     }
 
@@ -132,6 +141,15 @@ impl Component for Connect4Human {
                 self.save_task = None;
             },
             Msg::SaveError => log!("Game failed to save"),
+            Msg::Player1ColorChange(new_value) => {
+                self.player1_color = new_value;
+            },
+            Msg::Player2ColorChange(new_value) => {
+                self.player2_color = new_value;
+            },
+            Msg::BoardColorChange(new_value) => {
+                self.board_color = new_value;
+            },
         }
         true
     }
@@ -162,7 +180,6 @@ impl Component for Connect4Human {
                 <div>
                     <br></br>
                     <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
-                    <small>{"(Disc Colors: "}  {&self.game.player1_name} {" - Red "} {&self.game.player2_name} {" - Yellow)"}</small>
                     <br></br>
                 </div>
             }
@@ -171,39 +188,88 @@ impl Component for Connect4Human {
         }
         html! {
             <>
-                <div>
+                <div class="w3-container">
                     <div class="w3-container">
-                        <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
+                        <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     </div>
-                    <div class="col-md-offset-4 col-md-8">
-                        <div class="col-md-offset-3 col-md-8">
-                            <form
-                                onsubmit=self.link.callback(|_| Msg::ClickedStart)
-                                action="javascript:void(0);">
+                    <form
+                        onsubmit=self.link.callback(|_| Msg::ClickedStart)
+                        action="javascript:void(0);">
+                    
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <div class="w3-quarter">
+                                <label for="nameInput1">{"Player 1 Name:"}</label>
                                 <input
+                                    class="w3-input w3-border w3-round"
                                     id="nameInput1"
                                     type="text"
                                     disabled=self.game_started
                                     value=&self.game.player1_name
                                     oninput=self.link.callback(|e: InputData| Msg::GotPlayer1Input(e.value))
-                                    placeholder="Player 1's Name"/>
+                                    placeholder="Enter name"
+                                />
+                            </div>
+
+                            <div class="w3-quarter">
+                                <label for="nameInput2">{"Player 2 Name:"}</label>
                                 <input
+                                    class="w3-input w3-border w3-round"
                                     id="nameInput2"
                                     type="text"
                                     disabled=self.game_started
                                     value=&self.game.player2_name
                                     oninput=self.link.callback(|e: InputData| Msg::GotPlayer2Input(e.value))
-                                    placeholder="Player 2's Name"/>
+                                    placeholder="Enter name"/>
+                            </div>
+                            
+                            <div class="w3-quarter">
+                                <label for="player1_color">{"Disc Color Player 1:"}</label>
                                 <input
-                                    id="startButton"
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::Player1ColorChange(e.value)) 
+                                    type="color" 
+                                    id="player1_color"
+                                    value=&self.player1_color 
                                     disabled=self.game_started
-                                    class="w3-button w3-border"
-                                    type="submit"
-                                    value="Start Game"/>
-                            </form>
+                                />
+                            </div>
+                            <div class="w3-quarter">
+                                <label for="player2_color">{"Disc Color Player 2:"}</label>
+                                <input
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::Player2ColorChange(e.value))
+                                    type="color" 
+                                    id="player2_color" 
+                                    value=&self.player2_color 
+                                    disabled=self.game_started
+                                />
+                            </div>
                         </div>
-                    </div>
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <div class="w3-threequarter">
+                                <label for="board_color">{"Board Color:"}</label>  
+                                <input
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::BoardColorChange(e.value))
+                                    type="color" 
+                                    id="board_color"
+                                    name="favcolor"
+                                    value=&self.board_color
+                                    disabled=self.game_started
+                                />
+                            </div>  
+                        </div>
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <input
+                                class="w3-button w3-border w3-block"
+                                id="startButton"
+                                disabled=self.game_started
+                                type="submit"
+                                value="Start Game"
+                            />
+                        </div>
+                    </form>
                 </div>
 
                 {game_details}
@@ -225,7 +291,7 @@ impl Connect4Human {
         let context = self.context();
 
         context.save();
-        context.set_fill_style(&JsValue::from_str("#00bfff"));
+        context.set_fill_style(&JsValue::from_str(&self.board_color));
         context.begin_path();
         for y in 0..6 {
             let y = y as f64;
@@ -240,16 +306,16 @@ impl Connect4Human {
     }
 
     fn draw(&self) {
-        let mut fg_color = "transparent";
+        let mut fg_color = "transparent".to_string();
         for y in 0..6 {
             for x in 0..7 {
-                fg_color = "transparent";
+                fg_color = "transparent".to_string();
                 if self.board.tokens[y][x] >= 1 {
-                    fg_color = "#ff4136";
+                    fg_color = self.player1_color.clone();
                 } else if self.board.tokens[y][x] <= -1_i8 {
-                    fg_color = "#ffff00";
+                    fg_color = self.player2_color.clone();
                 }
-                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string());
+                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color, "black".to_string());
             }
         }
     }

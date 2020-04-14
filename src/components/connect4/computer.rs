@@ -55,7 +55,7 @@ pub enum Msg {
     GameSaved,
     SaveError,
     Player1ColorChange(String),
-    Player2ColorChange(String),
+    ComputerColorChange(String),
     BoardColorChange(String),
     DifficultyLevelChange(String)
 }
@@ -154,7 +154,7 @@ impl Component for Connect4Computer {
             Msg::Player1ColorChange(new_value) => {
                 self.player1_color = new_value;
             },
-            Msg::Player2ColorChange(new_value) => {
+            Msg::ComputerColorChange(new_value) => {
                 self.computer_color = new_value;
             },
             Msg::BoardColorChange(new_value) => {
@@ -200,7 +200,6 @@ impl Component for Connect4Computer {
                 <div>
                     <br></br>
                     <h4>{"New Game: "}  {&self.game.player1_name} {" Vs "} {&self.game.player2_name}</h4>
-                    <small>{"Disc Colors: "}  {&self.game.player1_name} {" - Red "} {&self.game.player2_name} {" - Yellow "}</small>
                     <br></br>
                 </div>
             }
@@ -228,7 +227,7 @@ impl Component for Connect4Computer {
                                     disabled=self.game_started
                                     value=&self.game.player1_name
                                     oninput=self.link.callback(|e: InputData| Msg::GotInput(e.value))
-                                    placeholder="Your Name"
+                                    placeholder="Enter name"
                                 />
                             </div>
                             
@@ -247,7 +246,7 @@ impl Component for Connect4Computer {
                                 <label for="computer_color">{"Disc Color Computer:"}</label>
                                 <input
                                     style="display:block;"
-                                    oninput=self.link.callback(|e: InputData| Msg::Player2ColorChange(e.value))
+                                    oninput=self.link.callback(|e: InputData| Msg::ComputerColorChange(e.value))
                                     type="color" 
                                     id="computer_color" 
                                     value=&self.computer_color 
