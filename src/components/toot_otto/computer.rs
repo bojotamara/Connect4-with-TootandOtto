@@ -25,7 +25,12 @@ pub struct TootOttoComputer {
     move_num: u8,
     won: bool,
     paused: bool,
-    save_task: Option<Result<FetchTask, Error>>
+    save_task: Option<Result<FetchTask, Error>>,
+    player1_color: String,
+    computer_color: String,
+    board_color: String,
+    selected_difficulty: String,
+    max_depth: i64
 }
 
 macro_rules! log {
@@ -45,7 +50,11 @@ pub enum Msg {
     ClickedBoard(MouseEvent),
     GetGamesList(Vec<Game>),
     GameSaved,
-    SaveError
+    SaveError,
+    Player1ColorChange(String),
+    ComputerColorChange(String),
+    BoardColorChange(String),
+    DifficultyLevelChange(String)
 }
 
 impl Component for TootOttoComputer {
@@ -76,7 +85,12 @@ impl Component for TootOttoComputer {
             move_num: 0,
             won: false,
             paused: false,
-            save_task: None
+            save_task: None,
+            player1_color: "#99ffcc".into(),
+            computer_color: "#ffff99".into(),
+            board_color: "#00bfff".into(),
+            selected_difficulty: "easy".into(),
+            max_depth: 1
         }
     }
 
@@ -143,6 +157,25 @@ impl Component for TootOttoComputer {
                 self.save_task = None;
             },
             Msg::SaveError => log!("Game failed to save"),
+            Msg::Player1ColorChange(new_value) => {
+                self.player1_color = new_value;
+            },
+            Msg::ComputerColorChange(new_value) => {
+                self.computer_color = new_value;
+            },
+            Msg::BoardColorChange(new_value) => {
+                self.board_color = new_value;
+            },
+            Msg::DifficultyLevelChange(new_value) => {
+                if new_value == "easy" {
+                    self.max_depth = 1;
+                } else if new_value == "medium" {
+                    self.max_depth = 3;
+                } else if new_value == "hard" {
+                    self.max_depth = 4;
+                }
+                self.selected_difficulty = new_value;
+            },
         }
         true
     }
@@ -200,32 +233,95 @@ impl Component for TootOttoComputer {
         }
         html! {
             <>
-                <div>
+                <div class="w3-container">
                     <div class="w3-container">
                         <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     </div>
-                    <div class="col-md-offset-4 col-md-8">
-                        <div class="col-md-offset-3 col-md-8">
-                            <form
-                                onsubmit=self.link.callback(|_| Msg::ClickedStart)
-                                action="javascript:void(0);">
+                    <form
+                        onsubmit=self.link.callback(|_| Msg::ClickedStart)
+                        action="javascript:void(0);">
+                    
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <div class="w3-quarter">
+                                <label for="nameInput">{"Player Name:"}</label>
                                 <input
-                                    id="nameInput1"
+                                    class="w3-input w3-border w3-round"
+                                    id="nameInput"
                                     type="text"
                                     disabled=self.game_started
                                     value=&self.game.player1_name
                                     oninput=self.link.callback(|e: InputData| Msg::GotPlayer1Input(e.value))
-                                    placeholder="Your Name"/>
+                                    placeholder="Enter name"
+                                />
+                            </div>
+                            
+                            <div class="w3-quarter">
+                                <label for="player1_color">{"Disc Color Player 1:"}</label>
                                 <input
-                                    id="startButton"
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::Player1ColorChange(e.value)) 
+                                    type="color" 
+                                    id="player1_color"
+                                    value=&self.player1_color 
                                     disabled=self.game_started
-                                    class="w3-button w3-border"
-                                    type="submit"
-                                    value="Start Game"/>
-                            </form>
+                                />
+                            </div>
+                            <div class="w3-quarter">
+                                <label for="computer_color">{"Disc Color Computer:"}</label>
+                                <input
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::ComputerColorChange(e.value))
+                                    type="color" 
+                                    id="computer_color" 
+                                    value=&self.computer_color 
+                                    disabled=self.game_started
+                                />
+                            </div>
+                            <div class="w3-quarter">  
+                                <label for="board_color">{"Board Color:"}</label>  
+                                <input
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::BoardColorChange(e.value))
+                                    type="color" 
+                                    id="board_color"
+                                    name="favcolor"
+                                    value=&self.board_color
+                                    disabled=self.game_started
+                                />
+                            </div>
                         </div>
-                    </div>
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <div class="w3-threequarter">
+                                <label>{"Difficulty Level:"}</label>
+                                <div style="display:block;">
+                                    <input class="w3-radio" type="radio" name="difficulty"
+                                        value="easy" disabled=self.game_started checked={self.selected_difficulty == "easy"}
+                                        oninput=self.link.callback(|e: InputData| Msg::DifficultyLevelChange(e.value))/>
+                                    <label style="padding:8px;">{"Easy"}</label>
+                                    
+                                    <input class="w3-radio" type="radio" name="difficulty"
+                                        value="medium" disabled=self.game_started checked={self.selected_difficulty == "medium"}
+                                        oninput=self.link.callback(|e: InputData| Msg::DifficultyLevelChange(e.value))/>
+                                    <label style="padding:8px;">{"Medium"}</label>
+                                    
+                                    <input class="w3-radio" type="radio" name="difficulty"
+                                        value="hard" disabled=self.game_started checked={self.selected_difficulty == "hard"}
+                                        oninput=self.link.callback(|e: InputData| Msg::DifficultyLevelChange(e.value))/>
+                                    <label style="padding:8px;">{"Hard"}</label>
+                                </div>
+                            </div>  
+                        </div>
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <input
+                                class="w3-button w3-border w3-block"
+                                id="startButton"
+                                disabled=self.game_started
+                                type="submit"
+                                value="Start Game"
+                            />
+                        </div>
+                    </form>
                 </div>
 
                 {game_details}
@@ -235,8 +331,7 @@ impl Component for TootOttoComputer {
                     id="toot-otto-computer-gameboard"
                     height="480"
                     width="640">
-                </canvas>
-                
+                </canvas> 
             </>
         }
     }
@@ -247,7 +342,7 @@ impl TootOttoComputer {
         let context = self.context();
 
         context.save();
-        context.set_fill_style(&JsValue::from_str("#00bfff"));
+        context.set_fill_style(&JsValue::from_str(&self.board_color));
         context.begin_path();
         for y in 0..6 {
             let y = y as f64;
@@ -262,26 +357,26 @@ impl TootOttoComputer {
     }
 
     fn draw(&self){
-        let mut fg_color = "transparent";
+        let mut fg_color = "transparent".to_string();
         for y in 0..6 {
             for x in 0..7 {
                 let mut text = ' ';
-                fg_color = "transparent";
+                fg_color = "transparent".to_string();
                 if self.board.tokens[y][x] >= 1 && self.board.disc_map[y][x] == 'T' {
-                    fg_color = "#99ffcc";
+                    fg_color = self.player1_color.clone();
                     text = 'T';
                 } else if self.board.tokens[y][x] >= 1 && self.board.disc_map[y][x] == 'O' {
-                    fg_color = "#99ffcc";
+                    fg_color = self.player1_color.clone();
                     text = 'O';
                 } else if self.board.tokens[y][x] <= -1_i8 && self.board.disc_map[y][x] == 'T' {
-                    fg_color = "#ffff99";
+                    fg_color = self.computer_color.clone();
                     text = 'T';
                 } else if self.board.tokens[y][x] <= -1_i8 && self.board.disc_map[y][x] == 'O' {
-                    fg_color = "#ffff99";
+                    fg_color = self.computer_color.clone();
                     text = 'O';
                 }
 
-                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string(), text.to_string());
+                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color, "black".to_string(), text.to_string());
             }
         }
     }
@@ -299,25 +394,6 @@ impl TootOttoComputer {
         context.set_font("bold 25px serif");
         context.restore();
         context.fill_text(&text.as_str(), x - 8.5, y + 8.0);
-    }
-
-    fn draw_mask(&self) {
-        // draw the mask
-        // http://stackoverflow.com/questions/6271419/how-to-fill-the-opposite-shape-on-canvas
-        // -->  http://stackoverflow.com/a/11770000/917957
-
-        let context = self.context();
-        context.save();
-        context.set_fill_style(&JsValue::from_str(&"#00bfff"));
-        context.begin_path();
-        for y in 0..6 {
-            for x in 0..7 {
-                context.arc(75.0 * x as f64 + 100.0, 75.0 * y as f64 + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI);
-                context.rect(75.0 * x as f64 + 150.0, 75.0 * y as f64, -100.0, 100.0);
-            }
-        }
-        context.fill();
-        context.restore();
     }
 
     fn on_region(&self, coord: [f64; 2], x: f64, radius: f64) -> bool {
@@ -662,12 +738,11 @@ impl TootOttoComputer {
             0
         }
         
-        fn value(state: [[char; 7]; 6], depth: i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
-            let MAX_DEPTH = 4; // Less depth = easier
+        fn value(state: [[char; 7]; 6], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
             let val = check_state(state);
 
             // depth changes the difficulty (less depth = easier)
-            if depth >= MAX_DEPTH {
+            if depth >= *max_depth {
                 // If it lead to winning, then do it
                 if val == 1 { // AI win, AI wants to win of course
                     return 999999 - depth * depth; // Less value if it is later on in the game
@@ -685,18 +760,17 @@ impl TootOttoComputer {
             }
 
             if depth % 2 == 0 {
-                return min_state(state, depth + 1, choice, alpha, beta)[0];
+                return min_state(state, depth + 1, max_depth, choice, alpha, beta)[0];
             }
-            return max_state(state, depth + 1, choice, alpha, beta)[0];
+            return max_state(state, depth + 1, max_depth, choice, alpha, beta)[0];
         }
 
-        fn value_states(states: [[[char; 7]; 6]; 2], depth: i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
-            let MAX_DEPTH = 4; // Less depth = easier
+        fn value_states(states: [[[char; 7]; 6]; 2], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
             let val_1 = check_state(states[0]);
             let val_2 = check_state(states[1]);
 
             // depth changes the difficulty (less depth = easier)
-            if depth >= MAX_DEPTH {
+            if depth >= *max_depth {
                 // If it lead to winning, then do it
                 if val_1 == 1 || val_2 == 1 { // AI win, AI wants to win of course
                     return 999999 - depth * depth; // Less value if it is later on in the game
@@ -714,9 +788,9 @@ impl TootOttoComputer {
             }
 
             if depth % 2 == 0 {
-                return min(min_state(states[0], depth + 1, choice, alpha, beta)[0], min_state(states[1], depth + 1, choice, alpha, beta)[0]);
+                return min(min_state(states[0], depth + 1, max_depth, choice, alpha, beta)[0], min_state(states[1], depth + 1, max_depth, choice, alpha, beta)[0]);
             }
-            return max(max_state(states[0], depth + 1, choice, alpha, beta)[0], max_state(states[1], depth + 1, choice, alpha, beta)[0]);
+            return max(max_state(states[0], depth + 1, max_depth, choice, alpha, beta)[0], max_state(states[1], depth + 1, max_depth, choice, alpha, beta)[0]);
         }
 
         fn choose(choice: Vec<i64>) -> i64 {
@@ -725,7 +799,7 @@ impl TootOttoComputer {
         }
 
         // Returns [value, choice (column chosen)]
-        fn max_state(state: [[char; 7]; 6], depth: i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
+        fn max_state(state: [[char; 7]; 6], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
             let mut alpha = alpha;
             let mut v = -100000000007;
             let mut move_col = -1;
@@ -735,7 +809,7 @@ impl TootOttoComputer {
                 match choice {
                     Some(choice) => {
                         if let Ok(temp_state) = fill_map_choice(state, j, choice) {
-                            temp_val = value(temp_state, depth, None, alpha, beta);
+                            temp_val = value(temp_state, depth, max_depth, None, alpha, beta);
         
                             if temp_val > v {
                                 v = temp_val;
@@ -757,7 +831,7 @@ impl TootOttoComputer {
                     },
                     None => {
                         if let Ok(temp_states) = fill_map(state, j) {
-                            temp_val = value_states(temp_states, depth, None, alpha, beta);
+                            temp_val = value_states(temp_states, depth, max_depth, None, alpha, beta);
 
                             if temp_val > v {
                                 v = temp_val;
@@ -787,7 +861,7 @@ impl TootOttoComputer {
         }
 
         // Returns [value, choice (column chosen)]
-        fn min_state(state: [[char; 7]; 6], depth: i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
+        fn min_state(state: [[char; 7]; 6], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
             let mut beta = beta;
             let mut v = 100000000007;
             let mut move_col = -1;
@@ -797,7 +871,7 @@ impl TootOttoComputer {
                 match choice {
                     Some(choice) => {
                         if let Ok(temp_states) = fill_map_choice(state, j, choice) {
-                            temp_val = value(temp_states, depth, None, alpha, beta);
+                            temp_val = value(temp_states, depth, max_depth, None, alpha, beta);
         
                             if temp_val < v {
                                 v = temp_val;
@@ -818,7 +892,7 @@ impl TootOttoComputer {
                     },
                     None => {
                         if let Ok(temp_states) = fill_map(state, j) {
-                            temp_val = value_states(temp_states, depth, None, alpha, beta);
+                            temp_val = value_states(temp_states, depth, max_depth, None, alpha, beta);
         
                             if temp_val < v {
                                 v = temp_val;
@@ -847,10 +921,10 @@ impl TootOttoComputer {
         }
 
         // Calculate max/min states
-        let [value_T_max, column_T_max] = max_state(curr_state, 0, Some('T'), -100000000007, 100000000007);
-        let [value_T_min, column_T_min] = min_state(curr_state, 0, Some('T'), -100000000007, 100000000007);
-        let [value_O_max, column_O_max] = max_state(curr_state, 0, Some('O'), -100000000007, 100000000007);
-        let [value_O_min, column_O_min] = min_state(curr_state, 0, Some('O'), -100000000007, 100000000007);
+        let [value_T_max, column_T_max] = max_state(curr_state, 0, &self.max_depth, Some('T'), -100000000007, 100000000007);
+        let [value_T_min, column_T_min] = min_state(curr_state, 0, &self.max_depth, Some('T'), -100000000007, 100000000007);
+        let [value_O_max, column_O_max] = max_state(curr_state, 0, &self.max_depth, Some('O'), -100000000007, 100000000007);
+        let [value_O_min, column_O_min] = min_state(curr_state, 0, &self.max_depth, Some('O'), -100000000007, 100000000007);
         
         // log!("Max state: AI Disc type: T chosen column: {} (value: {})", column_T_max, value_T_max);
         // log!("Min state: AI Disc type: T chosen column: {} (value: {})", column_T_min, value_T_min);
