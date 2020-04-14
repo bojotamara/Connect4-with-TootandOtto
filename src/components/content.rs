@@ -122,9 +122,11 @@ impl Component for Content {
 
     fn view(&self) -> Html {
         html! {
-            <div class="w3-main" style="margin-left:28%;height:100%;overflow:auto;">
-                {get_tab_html(&self.props.tab)}
-            </div>
+            <div class="w3-main w3-container">
+                <div style="margin-left:28%;height:100%;overflow:auto;">
+                    {get_tab_html(&self.props.tab)}
+                </div>
+            </div> 
         }
     }
 }
