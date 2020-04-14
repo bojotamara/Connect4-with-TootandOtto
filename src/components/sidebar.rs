@@ -45,8 +45,14 @@ impl Component for Sidebar {
         html! {
             <nav class="w3-sidenav w3-red w3-bar-block w3-large" style="width:25%;font-weight:bold;position:fixed;height:100%;overflow:auto;" id="sidenav">
                 <div class="w3-container">
-                    <h3 class="w3-padding-64"><b>{"Play Connect4 / TOOT-OTTO"}</b></h3>
+                    <h3 style="padding-top:48px;padding-bottom:30px;"><b>{"Play Connect4 / TOOT-OTTO"}</b></h3>
                 </div>
+                <button
+                    onclick=self.link.callback(|_| Msg::TabClicked(Tab::Home))
+                    class="w3-bar-item w3-button w3-hover-white active">
+                    {"Home"}
+                </button>
+                <h5 class="w3-bar-item"></h5>
                 <button
                     onclick=self.link.callback(|_| Msg::TabClicked(Tab::HowToConnect4))
                     class="w3-bar-item w3-button w3-hover-white">

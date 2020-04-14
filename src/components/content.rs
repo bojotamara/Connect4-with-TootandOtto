@@ -29,7 +29,7 @@ pub struct Props {
 
 fn homepage_html() -> Html {
     html!{
-        <div class="w3-container" id="services" style="margin-top:75px">
+        <div class="w3-container">
             <h5 class="w3-xxxlarge w3-text-red"><b>{"Welcome"}</b></h5>
             <hr style="width:50px;border:5px solid red" class="w3-round" />
             <p>{"This application contains the following two board games, both in human Vs. human and human Vs. Computer versions."}</p>
@@ -44,7 +44,7 @@ fn homepage_html() -> Html {
 
 fn how_to_connect4_html() -> Html {
     html!{
-        <div class="w3-container" id="services" style="margin-top:75px">
+        <div class="w3-container">
             <h5 class="w3-xxxlarge w3-text-red"><b>{"How to Play Connect 4"}</b></h5>
             <hr style="width:50px;border:5px solid red" class="w3-round" />
             <p>{"Connect Four is a two-player connection game in which the players take turns dropping colored discs from the top into a seven-column, six-row vertically suspended grid. The objective of the game is to be the first to form a horizontal, vertical, or diagonal line of four of one's own discs."}</p>
@@ -63,7 +63,7 @@ fn how_to_connect4_html() -> Html {
 
 fn how_to_toot_html() -> Html {
     html!{
-        <div class="w3-container" id="services" style="margin-top:75px">
+        <div class="w3-container">
             <h5 class="w3-xxxlarge w3-text-red"><b>{"How to Play TOOT-OTTO"}</b></h5>
             <hr style="width:50px;border:5px solid red" class="w3-round" />
             <p>{"TOOT-OTTO is a fun strategy game for older players who like tic-tac-toe and checkers. One player is TOOT and the other player is OTTO. Both players can place both T's and O's, based on their choice. The first player who spells his or her winning combination - horizontally, vertically or diagonally - wins!"}</p>
@@ -123,7 +123,7 @@ impl Component for Content {
     fn view(&self) -> Html {
         html! {
             <div class="w3-main w3-container">
-                <div style="margin-left:28%;height:100%;overflow:auto;">
+                <div style="margin-left:28%;height:100%;overflow:auto;margin-top:40px;">
                     {get_tab_html(&self.props.tab)}
                 </div>
             </div> 
