@@ -23,7 +23,12 @@ pub struct Connect4Computer {
     move_num: u8,
     won: bool,
     paused: bool,
-    save_task: Option<Result<FetchTask, Error>>
+    save_task: Option<Result<FetchTask, Error>>,
+    player1_color: String,
+    computer_color: String,
+    board_color: String,
+    selected_difficulty: String,
+    max_depth: i64
 }
 
 pub struct GameBoard {
@@ -48,7 +53,11 @@ pub enum Msg {
     ClickedBoard(MouseEvent),
     GetGamesList(Vec<Game>),
     GameSaved,
-    SaveError
+    SaveError,
+    Player1ColorChange(String),
+    Player2ColorChange(String),
+    BoardColorChange(String),
+    DifficultyLevelChange(String)
 }
 
 impl Component for Connect4Computer {
@@ -76,7 +85,12 @@ impl Component for Connect4Computer {
             move_num: 0,
             won: false,
             paused: false,
-            save_task: None
+            save_task: None,
+            player1_color: "#ff4136".into(),
+            computer_color: "#ffff00".into(),
+            board_color: "#00bfff".into(),
+            selected_difficulty: "easy".into(),
+            max_depth: 1
         }
     }
 
@@ -137,6 +151,25 @@ impl Component for Connect4Computer {
                 self.save_task = None;
             },
             Msg::SaveError => log!("Game failed to save"),
+            Msg::Player1ColorChange(new_value) => {
+                self.player1_color = new_value;
+            },
+            Msg::Player2ColorChange(new_value) => {
+                self.computer_color = new_value;
+            },
+            Msg::BoardColorChange(new_value) => {
+                self.board_color = new_value;
+            },
+            Msg::DifficultyLevelChange(new_value) => {
+                if new_value == "easy" {
+                    self.max_depth = 1;
+                } else if new_value == "medium" {
+                    self.max_depth = 3;
+                } else if new_value == "hard" {
+                    self.max_depth = 4;
+                }
+                self.selected_difficulty = new_value;
+            },
         }
         true
     }
@@ -176,32 +209,95 @@ impl Component for Connect4Computer {
         }
         html! {
             <>
-                <div>
+                <div class="w3-container">
                     <div class="w3-container">
                         <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
                         <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     </div>
-                    <div class="col-md-offset-4 col-md-8">
-                        <div class="col-md-offset-3 col-md-8">
-                            <form
-                                onsubmit=self.link.callback(|_| Msg::ClickedStart)
-                                action="javascript:void(0);">
+                    <form
+                        onsubmit=self.link.callback(|_| Msg::ClickedStart)
+                        action="javascript:void(0);">
+                    
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <div class="w3-quarter">
+                                <label for="nameInput">{"Player Name:"}</label>
                                 <input
+                                    class="w3-input w3-border w3-round"
                                     id="nameInput"
                                     type="text"
                                     disabled=self.game_started
                                     value=&self.game.player1_name
                                     oninput=self.link.callback(|e: InputData| Msg::GotInput(e.value))
-                                    placeholder="Your Name"/>
+                                    placeholder="Your Name"
+                                />
+                            </div>
+                            
+                            <div class="w3-quarter">
+                                <label for="player1_color">{"Disc Color Player 1:"}</label>
                                 <input
-                                    id="startButton"
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::Player1ColorChange(e.value)) 
+                                    type="color" 
+                                    id="player1_color"
+                                    value=&self.player1_color 
                                     disabled=self.game_started
-                                    class="w3-button w3-border"
-                                    type="submit"
-                                    value="Start Game"/>
-                            </form>
+                                />
+                            </div>
+                            <div class="w3-quarter">
+                                <label for="computer_color">{"Disc Color Computer:"}</label>
+                                <input
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::Player2ColorChange(e.value))
+                                    type="color" 
+                                    id="computer_color" 
+                                    value=&self.computer_color 
+                                    disabled=self.game_started
+                                />
+                            </div>
+                            <div class="w3-quarter">  
+                                <label for="board_color">{"Board Color:"}</label>  
+                                <input
+                                    style="display:block;"
+                                    oninput=self.link.callback(|e: InputData| Msg::BoardColorChange(e.value))
+                                    type="color" 
+                                    id="board_color"
+                                    name="favcolor"
+                                    value=&self.board_color
+                                    disabled=self.game_started
+                                />
+                            </div>
                         </div>
-                    </div>
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <div class="w3-threequarter">
+                                <label>{"Difficulty Level:"}</label>
+                                <div style="display:block;">
+                                    <input class="w3-radio" type="radio" name="difficulty"
+                                        value="easy" disabled=self.game_started checked={self.selected_difficulty == "easy"}
+                                        oninput=self.link.callback(|e: InputData| Msg::DifficultyLevelChange(e.value))/>
+                                    <label style="padding:8px;">{"Easy"}</label>
+                                    
+                                    <input class="w3-radio" type="radio" name="difficulty"
+                                        value="medium" disabled=self.game_started checked={self.selected_difficulty == "medium"}
+                                        oninput=self.link.callback(|e: InputData| Msg::DifficultyLevelChange(e.value))/>
+                                    <label style="padding:8px;">{"Medium"}</label>
+                                    
+                                    <input class="w3-radio" type="radio" name="difficulty"
+                                        value="hard" disabled=self.game_started checked={self.selected_difficulty == "hard"}
+                                        oninput=self.link.callback(|e: InputData| Msg::DifficultyLevelChange(e.value))/>
+                                    <label style="padding:8px;">{"Hard"}</label>
+                                </div>
+                            </div>  
+                        </div>
+                        <div class="w3-row-padding" style="padding:4px;">
+                            <input
+                                class="w3-button w3-border w3-block"
+                                id="startButton"
+                                disabled=self.game_started
+                                type="submit"
+                                value="Start Game"
+                            />
+                        </div>
+                    </form>
                 </div>
 
                 {game_details}
@@ -223,7 +319,7 @@ impl Connect4Computer {
         let context = self.context();
 
         context.save();
-        context.set_fill_style(&JsValue::from_str("#00bfff"));
+        context.set_fill_style(&JsValue::from_str(&self.board_color));
         context.begin_path();
         for y in 0..6 {
             let y = y as f64;
@@ -238,16 +334,16 @@ impl Connect4Computer {
     }
 
     fn draw(&self) {
-        let mut fg_color = "transparent";
+        let mut fg_color = "transparent".to_string();
         for y in 0..6 {
             for x in 0..7 {
-                fg_color = "transparent";
+                fg_color = "transparent".to_string();
                 if self.board.tokens[y][x] >= 1 {
-                    fg_color = "#ff4136";
+                    fg_color = self.player1_color.clone();
                 } else if self.board.tokens[y][x] <= -1_i8 {
-                    fg_color = "#ffff00";
+                    fg_color = self.computer_color.clone();
                 }
-                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color.to_string(), "black".to_string());
+                self.draw_circle((75 * x + 100) as f64, (75 * y + 50) as f64, 25.0, fg_color, "black".to_string());
             }
         }
     }
@@ -506,12 +602,11 @@ impl Connect4Computer {
             [win_val.into(), chain_val.into()]
         }
         
-        fn value(state: [[i8; 7]; 6], depth: i64, alpha: i64, beta: i64) -> [i64; 2] {
-            let MAX_DEPTH = 4; // Less depth = easier
+        fn value(state: [[i8; 7]; 6], depth: i64, max_depth: &i64, alpha: i64, beta: i64) -> [i64; 2] {
             let val = check_state(state);
 
             // depth changes the difficulty (less depth = easier)
-            if depth >= MAX_DEPTH {
+            if depth >= *max_depth {
 
                 let win_val = val[0];
                 let mut ret_value = val[1] * -1;
@@ -535,9 +630,9 @@ impl Connect4Computer {
             }
 
             if depth % 2 == 0 {
-                return min_state(state, depth + 1, alpha, beta);
+                return min_state(state, depth + 1, max_depth, alpha, beta);
             }
-            return max_state(state, depth + 1, alpha, beta);
+            return max_state(state, depth + 1, max_depth, alpha, beta);
         }
 
         fn choose(choice: Vec<i64>) -> i64 {
@@ -546,7 +641,7 @@ impl Connect4Computer {
         }
 
         // Returns [value, choice (column chosen)]
-        fn max_state(state: [[i8; 7]; 6], depth: i64, alpha: i64, beta: i64) -> [i64; 2] {
+        fn max_state(state: [[i8; 7]; 6], depth: i64, max_depth: &i64, alpha: i64, beta: i64) -> [i64; 2] {
             let mut alpha = alpha;
             let mut v = -100000000007;
             let mut move_col = -1;
@@ -554,7 +649,7 @@ impl Connect4Computer {
             let mut move_queue = Vec::<i64>::new();
             for j in 0..7 {
                 if let Ok(temp_state) = fill_map(state, j, -1) {
-                    temp_val = value(temp_state, depth, alpha, beta);
+                    temp_val = value(temp_state, depth, max_depth, alpha, beta);
 
                     if temp_val[0] > v {
                         v = temp_val[0];
@@ -582,7 +677,7 @@ impl Connect4Computer {
         }
 
         // Returns [value, choice (column chosen)]
-        fn min_state(state: [[i8; 7]; 6], depth: i64, alpha: i64, beta: i64) -> [i64; 2] {
+        fn min_state(state: [[i8; 7]; 6], depth: i64, max_depth: &i64, alpha: i64, beta: i64) -> [i64; 2] {
             let mut beta = beta;
             let mut v = 100000000007;
             let mut move_col = -1;
@@ -590,7 +685,7 @@ impl Connect4Computer {
             let mut move_queue = Vec::<i64>::new();
             for j in 0..7 {
                 if let Ok(temp_state) = fill_map(state, j, 1) {
-                    temp_val = value(temp_state, depth, alpha, beta);
+                    temp_val = value(temp_state, depth, max_depth, alpha, beta);
 
                     if temp_val[0] < v {
                         v = temp_val[0];
@@ -617,8 +712,8 @@ impl Connect4Computer {
         }
 
         // Obtain choice and take action
-        let [val, choice] = max_state(curr_state, 0, -100000000007, 100000000007);
-        let [val2, choice2] = min_state(curr_state, 0, -100000000007, 100000000007);
+        let [val, choice] = max_state(curr_state, 0, &self.max_depth, -100000000007, 100000000007);
+        let [val2, choice2] = min_state(curr_state, 0, &self.max_depth, -100000000007, 100000000007);
         self.action(choice);
 
         // Print AI's move
@@ -683,10 +778,14 @@ impl Connect4Computer {
             game_number: 0, // placeholder, when game is saved this can be set
             game_type: "Connect4".into(),
             player1_name: "".into(),
-            player2_name: "".into(),
+            player2_name: "Computer".into(),
             winner_name: "".into(),
             game_date: 0 // placeholder, when game is saved this can be set
         };
+        // self.selected_difficulty = "easy".into();
+        // self.board_color = "#00bfff".into();
+        // self.player1_color = "#ff4136".into();
+        // self.computer_color = "#ffff00".into();
         self.game_started = false;
         self.board.tokens = [[0; 7]; 6];
         self.move_num = 0;
