@@ -73,10 +73,10 @@ impl Component for TootOttoHuman {
             game_started: false,
             context: None,
             board: TootOttoGameBoard {
-                rows: 6,
-                columns: 7,
-                tokens: [[0; 7]; 6],
-                disc_map: [['0'; 7]; 6]
+                rows: 4,
+                columns: 6,
+                tokens: [[0; 6]; 4],
+                disc_map: [['0'; 6]; 4]
             },
             move_num: 0,
             won: false,
@@ -334,9 +334,9 @@ impl TootOttoHuman {
         context.save();
         context.set_fill_style(&JsValue::from_str(&self.board_color));
         context.begin_path();
-        for y in 0..6 {
+        for y in 0..4 {
             let y = y as f64;
-            for x in 0..7 {
+            for x in 0..6 {
                 let x = x as f64;
                 context.arc(75.0 * x + 100.0, 75.0 * y + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI).unwrap();
                 context.rect(75.0 * x + 150.0, 75.0 * y, -100.0, 100.0);
@@ -348,8 +348,8 @@ impl TootOttoHuman {
 
     fn draw(&self){
         let mut fg_color = "transparent".to_string();
-        for y in 0..6 {
-            for x in 0..7 {
+        for y in 0..4 {
+            for x in 0..6 {
                 let mut text = ' ';
                 fg_color = "transparent".to_string();
                 if self.board.tokens[y][x] >= 1 && self.board.disc_map[y][x] == 'T' {
@@ -395,8 +395,8 @@ impl TootOttoHuman {
         context.save();
         context.set_fill_style(&JsValue::from_str(&"#00bfff"));
         context.begin_path();
-        for y in 0..6 {
-            for x in 0..7 {
+        for y in 0..4 {
+            for x in 0..6 {
                 context.arc(75.0 * x as f64 + 100.0, 75.0 * y as f64 + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI);
                 context.rect(75.0 * x as f64 + 150.0, 75.0 * y as f64, -100.0, 100.0);
             }
@@ -451,7 +451,7 @@ impl TootOttoHuman {
 
         let mut row = 0;
         let mut done = false;
-        for i in 0..5 {
+        for i in 0..3 {
             match self.board.tokens[i + 1][column as usize] {
                 0 => continue,
                 _=> {
@@ -462,7 +462,7 @@ impl TootOttoHuman {
             }
         }
         if !done {
-            row = 5;
+            row = 3;
         }
         // log!("Adding token to row {}", row);
         self.board.tokens[row as usize][column as usize] = self.player_token();
@@ -479,29 +479,29 @@ impl TootOttoHuman {
 
     fn check (&mut self) {
         let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (['0'; 4], ['0'; 4], ['0'; 4], ['0'; 4]);
-        for i in 0..6 {
-            for j in 0..7 {
+        for i in 0..4 {
+            for j in 0..6 {
                 temp_r = ['0'; 4];
                 temp_b = ['0'; 4];
                 temp_br = ['0'; 4];
                 temp_tr = ['0'; 4];
                 for k in 0..=3 {
                     //from (i,j) to right
-                    if j + k < 7 {
+                    if j + k < 6 {
                         temp_r[k] = self.board.disc_map[i][j + k];
                     }
                     //from (i,j) to bottom
-                    if i + k < 6 {
+                    if i + k < 4 {
                         temp_b[k] = self.board.disc_map[i + k][j];
                     }
 
                     //from (i,j) to bottom-right
-                    if i + k < 6 && j + k < 7 {
+                    if i + k < 4 && j + k < 6 {
                         temp_br[k] = self.board.disc_map[i + k][j + k];
                     }
 
                     //from (i,j) to top-right
-                    if (i - k) as i8 >= 0 && j + k < 7 {
+                    if (i - k) as i8 >= 0 && j + k < 6 {
                         temp_tr[k] = self.board.disc_map[i - k][j + k];
                     }
                 }
@@ -534,7 +534,7 @@ impl TootOttoHuman {
             }
         }
         // check if draw
-        if self.move_num == 42 && !self.won {
+        if self.move_num == 24 && !self.won {
             self.win(0);
         }
     }
@@ -587,8 +587,8 @@ impl TootOttoHuman {
         msg.push_str("\n");
         msg.push_str(format!("Move: {}", self.move_num).as_str());
         msg.push_str("\n");
-        for i in 0..6 {
-            for j in 0..7 {
+        for i in 0..4 {
+            for j in 0..6 {
                 msg.push_str(format!(" {}", self.board.tokens[i][j]).as_str());
                 disc_msg.push_str(format!(" {}", self.board.disc_map[i][j]).as_str());
             }
@@ -661,8 +661,8 @@ impl TootOttoHuman {
         };
         self.selected_disc = 'T';
         self.game_started = false;
-        self.board.tokens = [[0; 7]; 6];
-        self.board.disc_map = [['0'; 7]; 6];
+        self.board.tokens = [[0; 6]; 4];
+        self.board.disc_map = [['0'; 6]; 4];
         self.move_num = 0;
         self.won = false;
         self.paused = false;

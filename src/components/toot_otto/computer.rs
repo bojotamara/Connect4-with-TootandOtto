@@ -78,10 +78,10 @@ impl Component for TootOttoComputer {
             game_started: false,
             context: None,
             board: TootOttoGameBoard {
-                rows: 6,
-                columns: 7,
-                tokens: [[0; 7]; 6],
-                disc_map: [['0'; 7]; 6]
+                rows: 4,
+                columns: 6,
+                tokens: [[0; 6]; 4],
+                disc_map: [['0'; 6]; 4]
             },
             move_num: 0,
             won: false,
@@ -353,9 +353,9 @@ impl TootOttoComputer {
         context.save();
         context.set_fill_style(&JsValue::from_str(&self.board_color));
         context.begin_path();
-        for y in 0..6 {
+        for y in 0..4 {
             let y = y as f64;
-            for x in 0..7 {
+            for x in 0..6 {
                 let x = x as f64;
                 context.arc(75.0 * x + 100.0, 75.0 * y + 50.0, 25.0, 0.0, 2.0 * f64::consts::PI).unwrap();
                 context.rect(75.0 * x + 150.0, 75.0 * y, -100.0, 100.0);
@@ -367,8 +367,8 @@ impl TootOttoComputer {
 
     fn draw(&self){
         let mut fg_color = "transparent".to_string();
-        for y in 0..6 {
-            for x in 0..7 {
+        for y in 0..4 {
+            for x in 0..6 {
                 let mut text = ' ';
                 fg_color = "transparent".to_string();
                 if self.board.tokens[y][x] >= 1 && self.board.disc_map[y][x] == 'T' {
@@ -445,13 +445,13 @@ impl TootOttoComputer {
         if self.paused || self.won {
             return 0;
         }
-        if self.board.tokens[0][column as usize] != 0 || column < 0 || column > 6 {
+        if self.board.tokens[0][column as usize] != 0 || column < 0 || column > 5 {
             return -1;
         }
 
         let mut row = 0;
         let mut done = false;
-        for i in 0..5 {
+        for i in 0..3 {
             match self.board.tokens[i + 1][column as usize] {
                 0 => continue,
                 _=> {
@@ -462,7 +462,7 @@ impl TootOttoComputer {
             }
         }
         if !done {
-            row = 5;
+            row = 3;
         }
         // log!("Adding token to row {}", row);
         let token = self.player_token();
@@ -484,29 +484,29 @@ impl TootOttoComputer {
 
     fn check (&mut self) {
         let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (['0'; 4], ['0'; 4], ['0'; 4], ['0'; 4]);
-        for i in 0..6 {
-            for j in 0..7 {
+        for i in 0..4 {
+            for j in 0..6 {
                 temp_r = ['0'; 4];
                 temp_b = ['0'; 4];
                 temp_br = ['0'; 4];
                 temp_tr = ['0'; 4];
                 for k in 0..=3 {
                     //from (i,j) to right
-                    if j + k < 7 {
+                    if j + k < 6 {
                         temp_r[k] = self.board.disc_map[i][j + k];
                     }
                     //from (i,j) to bottom
-                    if i + k < 6 {
+                    if i + k < 4 {
                         temp_b[k] = self.board.disc_map[i + k][j];
                     }
 
                     //from (i,j) to bottom-right
-                    if i + k < 6 && j + k < 7 {
+                    if i + k < 4 && j + k < 6 {
                         temp_br[k] = self.board.disc_map[i + k][j + k];
                     }
 
                     //from (i,j) to top-right
-                    if (i - k) as i8 >= 0 && j + k < 7 {
+                    if (i - k) as i8 >= 0 && j + k < 6 {
                         temp_tr[k] = self.board.disc_map[i - k][j + k];
                     }
                 }
@@ -539,7 +539,7 @@ impl TootOttoComputer {
             }
         }
         // check if draw
-        if self.move_num == 42 && !self.won {
+        if self.move_num == 24 && !self.won {
             self.win(0);
         }
     }
@@ -593,8 +593,8 @@ impl TootOttoComputer {
         msg.push_str("\n");
         msg.push_str(format!("Move: {}", self.move_num).as_str());
         msg.push_str("\n");
-        for i in 0..6 {
-            for j in 0..7 {
+        for i in 0..4 {
+            for j in 0..6 {
                 msg.push_str(format!(" {}", self.board.tokens[i][j]).as_str());
                 disc_msg.push_str(format!(" {}", self.board.disc_map[i][j]).as_str());
             }
@@ -632,14 +632,14 @@ impl TootOttoComputer {
         let curr_state = self.board.disc_map.clone();
 
         // On success, returns an array of size 2 -> index 0 gives filled map with char 'T', index 1 gives filled map with char 'O'
-        fn fill_map(state: [[char; 7]; 6], column: i64) -> Result<[[[char; 7]; 6]; 2], i8> {
-            if state[0][column as usize] != '0' || column < 0 || column > 6 {
+        fn fill_map(state: [[char; 6]; 4], column: i64) -> Result<[[[char; 6]; 4]; 2], i8> {
+            if state[0][column as usize] != '0' || column < 0 || column > 5 {
                 return Err(-1);
             }
     
             let mut done = false;
             let mut row = 0;
-            for i in 0..5 {
+            for i in 0..3 {
                 if state[i + 1][column as usize] != '0' {
                     done = true;
                     row = i;
@@ -648,7 +648,7 @@ impl TootOttoComputer {
             }
     
             if !done {
-                row = 5;
+                row = 3;
             }
     
             let mut temp_map_T = state.clone();
@@ -661,14 +661,14 @@ impl TootOttoComputer {
         }
 
         // Fill map but with choice option
-        fn fill_map_choice(state: [[char; 7]; 6], column: i64, choice: char) -> Result<[[char; 7]; 6], i8> {
-            if state[0][column as usize] != '0' || column < 0 || column > 6 {
+        fn fill_map_choice(state: [[char; 6]; 4], column: i64, choice: char) -> Result<[[char; 6]; 4], i8> {
+            if state[0][column as usize] != '0' || column < 0 || column > 5 {
                 return Err(-1);
             }
     
             let mut done = false;
             let mut row = 0;
-            for i in 0..5 {
+            for i in 0..3 {
                 if state[i + 1][column as usize] != '0' {
                     done = true;
                     row = i;
@@ -677,7 +677,7 @@ impl TootOttoComputer {
             }
     
             if !done {
-                row = 5;
+                row = 3;
             }
     
             let mut temp_map = state.clone();
@@ -687,31 +687,31 @@ impl TootOttoComputer {
             return Ok(temp_map);
         }
 
-        fn check_state(state: [[char; 7]; 6]) -> i8 {
+        fn check_state(state: [[char; 6]; 4]) -> i8 {
             let (mut temp_r, mut temp_b, mut temp_br, mut temp_tr) = (['0'; 4], ['0'; 4], ['0'; 4], ['0'; 4]);
-            for i in 0..6 {
-                for j in 0..7 {
+            for i in 0..4 {
+                for j in 0..6 {
                     temp_r = ['0'; 4];
                     temp_b = ['0'; 4];
                     temp_br = ['0'; 4];
                     temp_tr = ['0'; 4];
                     for k in 0..=3 {
                         //from (i,j) to right
-                        if j + k < 7 {
+                        if j + k < 6 {
                             temp_r[k] = state[i][j + k];
                         }
                         //from (i,j) to bottom
-                        if i + k < 6 {
+                        if i + k < 4 {
                             temp_b[k] = state[i + k][j];
                         }
 
                         //from (i,j) to bottom-right
-                        if i + k < 6 && j + k < 7 {
+                        if i + k < 4 && j + k < 6 {
                             temp_br[k] = state[i + k][j + k];
                         }
 
                         //from (i,j) to top-right
-                        if (i - k) as i8 >= 0 && j + k < 7 {
+                        if (i - k) as i8 >= 0 && j + k < 6 {
                             temp_tr[k] = state[i - k][j + k];
                         }
                     }
@@ -749,7 +749,7 @@ impl TootOttoComputer {
             0
         }
         
-        fn value(state: [[char; 7]; 6], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
+        fn value(state: [[char; 6]; 4], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
             let val = check_state(state);
 
             // depth changes the difficulty (less depth = easier)
@@ -776,7 +776,7 @@ impl TootOttoComputer {
             return max_state(state, depth + 1, max_depth, choice, alpha, beta)[0];
         }
 
-        fn value_states(states: [[[char; 7]; 6]; 2], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
+        fn value_states(states: [[[char; 6]; 4]; 2], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> i64 {
             let val_1 = check_state(states[0]);
             let val_2 = check_state(states[1]);
 
@@ -810,13 +810,13 @@ impl TootOttoComputer {
         }
 
         // Returns [value, choice (column chosen)]
-        fn max_state(state: [[char; 7]; 6], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
+        fn max_state(state: [[char; 6]; 4], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
             let mut alpha = alpha;
             let mut v = -100000000007;
             let mut move_col = -1;
             let mut temp_val: i64;
             let mut move_queue = Vec::<i64>::new();
-            for j in 0..7 {
+            for j in 0..6 {
                 match choice {
                     Some(choice) => {
                         if let Ok(temp_state) = fill_map_choice(state, j, choice) {
@@ -872,13 +872,13 @@ impl TootOttoComputer {
         }
 
         // Returns [value, choice (column chosen)]
-        fn min_state(state: [[char; 7]; 6], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
+        fn min_state(state: [[char; 6]; 4], depth: i64, max_depth: &i64, choice: Option<char>, alpha: i64, beta: i64) -> [i64; 2] {
             let mut beta = beta;
             let mut v = 100000000007;
             let mut move_col = -1;
             let mut temp_val: i64;
             let mut move_queue = Vec::<i64>::new();
-            for j in 0..7 {
+            for j in 0..6 {
                 match choice {
                     Some(choice) => {
                         if let Ok(temp_states) = fill_map_choice(state, j, choice) {
@@ -950,12 +950,12 @@ impl TootOttoComputer {
                 // Choosing action T will result in win
                 self.computer_disc = 'T';
                 self.action(column_T_max);
-                msg.push_str(format!("4. AI T choose column: {} (value: {})", column_T_max, value_T_max).as_str());
+                msg.push_str(format!("AI T choose column: {} (value: {})", column_T_max, value_T_max).as_str());
             } else {
                 // Choosing action O will result in win
                 self.computer_disc = 'O';
                 self.action(column_O_max);
-                msg.push_str(format!("5. AI T choose column: {} (value: {})", column_O_max, value_O_max).as_str());
+                msg.push_str(format!("AI T choose column: {} (value: {})", column_O_max, value_O_max).as_str());
             }
         } else if value_T_min == -999999 || value_O_min == -999999 { // If there is a lose condition, block it immediately
             // Will lose in next two moves if play those discs...
@@ -963,12 +963,12 @@ impl TootOttoComputer {
                 // Choosing action O will result in block
                 self.computer_disc = 'O';
                 self.action(column_T_min);
-                msg.push_str(format!("1. AI O choose column: {} (value: {})", column_T_min, value_T_min).as_str());
+                msg.push_str(format!("AI O choose column: {} (value: {})", column_T_min, value_T_min).as_str());
             } else {
                 // Choosing action T will result in block
                 self.computer_disc = 'T';
                 self.action(column_O_min);
-                msg.push_str(format!("2. AI T choose column: {} (value: {})", column_O_min, value_O_min).as_str());
+                msg.push_str(format!("AI T choose column: {} (value: {})", column_O_min, value_O_min).as_str());
             }
         } else if value_T_max == value_O_max {
             // Choose a random action if they are both equal
@@ -976,17 +976,17 @@ impl TootOttoComputer {
             let random_choice = (Math::random() * 2.0).floor();
             self.computer_disc = choices[random_choice as usize].0;
             self.action(choices[random_choice as usize].1);
-            msg.push_str(format!("3. AI {} choose column: {} (value: {})", choices[random_choice as usize].0, choices[random_choice as usize].1, value_T_max).as_str());
+            msg.push_str(format!("AI {} choose column: {} (value: {})", choices[random_choice as usize].0, choices[random_choice as usize].1, value_T_max).as_str());
         } else if value_T_max > value_O_max {
             // Choose action T with higher value
             self.computer_disc = 'T';
             self.action(column_T_max);
-            msg.push_str(format!("4. AI T choose column: {} (value: {})", column_T_max, value_T_max).as_str());
+            msg.push_str(format!("AI T choose column: {} (value: {})", column_T_max, value_T_max).as_str());
         } else {
             // Choose action O with higher value
             self.computer_disc = 'O';
             self.action(column_O_max);
-            msg.push_str(format!("5. AI T choose column: {} (value: {})", column_O_max, value_O_max).as_str());
+            msg.push_str(format!("AI T choose column: {} (value: {})", column_O_max, value_O_max).as_str());
         }
 
         // Print AI's move
@@ -1032,8 +1032,8 @@ impl TootOttoComputer {
         };
         self.selected_disc = 'T';
         self.game_started = false;
-        self.board.tokens = [[0; 7]; 6];
-        self.board.disc_map = [['0'; 7]; 6];
+        self.board.tokens = [[0; 6]; 4];
+        self.board.disc_map = [['0'; 6]; 4];
         self.move_num = 0;
         self.won = false;
         self.paused = false;
