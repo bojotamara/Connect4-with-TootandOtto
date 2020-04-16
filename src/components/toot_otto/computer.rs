@@ -566,9 +566,9 @@ impl TootOttoComputer {
         context.save();
         context.set_font("14pt sans-serif");
         context.set_fill_style(&JsValue::from_str("#D3D3D3"));
-        context.fill_rect(145.0, 0.0, 320.0, 25.0);
+        context.fill_rect(50.0, 0.0, 475.0, 25.0);
         context.set_fill_style(&JsValue::from_str("#111"));
-        context.fill_text(&msg, 150.0, 20.0);
+        context.fill_text(&msg, 90.0, 20.0);
         context.restore();
 
         // Print final state
