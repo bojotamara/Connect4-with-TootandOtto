@@ -59,6 +59,6 @@
 
 4. Visit http://localhost:8080
 
-### Step 3: Play the games!
+### Step 4: Play the games!
 
 1. You should now be at the homepage for the game website. Click on the sidebar links to access instructions for Connect4/Toot and Otto, or jump straight into playing!
