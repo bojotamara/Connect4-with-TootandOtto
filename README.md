@@ -1,5 +1,11 @@
 # Connect4 with Toot and Otto
 
+Running this project requires MongoDB, Rust and Node.js/npm to be installed.
+
+Here are instructions to install Rust: https://doc.rust-lang.org/book/ch01-01-installation.html
+
+Here are instructions to install npm: https://nodejs.org/en/download/
+
 ### Step 1: Install MongoDB
 #### Windows
 1. Download the MongoDB installer file from the downloads section of the MongoDB website.
